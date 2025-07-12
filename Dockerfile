@@ -31,7 +31,7 @@ COPY config/config.yaml /defaults/
 
 # Create directories and set permissions
 RUN mkdir -p /config /app && \
-    lsiown abc:abc /app /config /defaults
+    chown abc:abc /app /config /defaults
 
 # Ports and volumes
 EXPOSE 8080
