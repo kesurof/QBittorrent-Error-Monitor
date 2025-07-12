@@ -65,12 +65,15 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        # Assurer la visibilité publique du package
-        outputs: type=registry
     
-    - name: Update package visibility
+    - name: Image Summary
       if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
       run: |
-        echo "Image pushed successfully to ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        echo "Available tags:"
-        echo "${{ steps.meta.outputs.tags }}"
+        echo "✅ Image pushed successfully to GHCR!"
+        echo "📦 Registry: ${{ env.REGISTRY }}"
+        echo "🏷️ Image Name: ${{ env.IMAGE_NAME }}"
+        echo "🔖 Tags:"
+        echo "${{ steps.meta.outputs.tags }}" | sed 's/^/  - /'
+        echo ""
+        echo "🔗 View on GHCR: https://github.com/kesurof/QBittorrent-Error-Monitor/pkgs/container/qbittorrent-monitor"
+        echo "📝 To make public: GitHub → Profile → Packages → qbittorrent-monitor → Package settings → Change visibility"
