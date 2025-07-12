@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  qbittorrent-monitor:
+    build: .
+    container_name: qbittorrent-error-monitor
+    restart: unless-stopped
+    
+    # Configuration réseau - connexion au réseau de vos autres conteneurs
+    networks:
+      - traefik_proxy  # Remplacez par votre réseau Docker
+    
+    # Variables d'environnement
+    environment:
+      - CHECK_INTERVAL=300
+      - LOG_LEVEL=INFO
+      - DOCKER_NETWORK=traefik_proxy
+      - DRY_RUN=false
+      - TZ=Europe/Paris  # Ajustez votre timezone
+    
+    # Volumes pour persistance et accès aux configurations
+    volumes:
+      # Logs persistants
+      - ./logs:/app/logs
+      
+      # Configuration personnalisée
+      - ./config:/app/config:ro
+      
+      # Accès au socket Docker pour inspecter les conteneurs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # Accès aux configurations Sonarr/Radarr (ajustez les chemins)
+      - /home/kesurof/.config:/configs:ro
+      # OU si vos configs sont ailleurs :
+      # - /opt/seedbox/docker/kesurof:/configs:ro
+    
+    # Limites de ressources pour la sécurité
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    
+    # Dépendances - attend que les services soient démarrés
+    depends_on:
+      - sonarr
+      - radarr
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "/app/qbittorrent-monitor.py", "--health-check"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    # Labels pour organisation
+    labels:
+      - "com.docker.compose.project=media-automation"
+      - "com.qbittorrent-monitor.version=2.0"
+
+  # Exemple de services Sonarr/Radarr (si pas déjà définis)
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    networks:
+      - traefik_proxy
+    # ... votre configuration existante
+    
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    networks:
+      - traefik_proxy
+    # ... votre configuration existante
+
+# Réseau externe (doit exister)
+networks:
+  traefik_proxy:
+    external: true

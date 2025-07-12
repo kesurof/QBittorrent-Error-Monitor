@@ -2,7 +2,66 @@
 
 ## 🚀 Installation Rapide sur Serveur
 
-### Étape 1 : Préparation du Serveur
+### 🐳 Option A : Installation Docker (Recommandée)
+
+L'installation Docker est la plus propre et isolée, sans impact sur votre environnement système.
+
+#### Étape 1 : Préparation Docker
+
+```bash
+# Connexion SSH à votre serveur
+ssh votre_utilisateur@votre_serveur
+
+# Mise à jour du système
+sudo apt update && sudo apt upgrade -y
+
+# Installation de Docker et Docker Compose
+sudo apt install -y docker.io docker-compose git curl
+
+# Ajouter votre utilisateur au groupe docker
+sudo usermod -aG docker $USER
+
+# Redémarrage de session pour appliquer les permissions
+newgrp docker
+
+# Vérifier que Docker fonctionne
+docker --version
+docker-compose --version
+docker ps  # Doit montrer vos conteneurs existants
+```
+
+#### Étape 2 : Installation du Monitor Docker
+
+```bash
+# Clonage du repository
+git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
+cd QBittorrent-Error-Monitor
+
+# Rendre le script Docker exécutable
+chmod +x docker-deploy.sh
+
+# Installation interactive avec détection automatique
+./docker-deploy.sh setup
+```
+
+#### Étape 3 : Vérification Docker
+
+```bash
+# Vérifier le statut
+./docker-deploy.sh status
+
+# Voir les logs en temps réel
+./docker-deploy.sh logs
+
+# Test de fonctionnement
+./docker-deploy.sh test
+```
+
+### 🔧 Option B : Installation Système (Alternative)
+
+Si vous préférez une installation système traditionnelle.
+
+#### Étape 1 : Préparation du Serveur
 
 ```bash
 # Connexion SSH à votre serveur
@@ -13,9 +72,23 @@ sudo apt update && sudo apt upgrade -y
 
 # Installation des dépendances
 sudo apt install -y python3 python3-pip curl git docker.io
+
+# IMPORTANT: Sortir de l'environnement virtuel si actif
+deactivate  # Si vous êtes dans un venv
 ```
 
-### Étape 2 : Vérification de l'Environnement
+```bash
+# Vérifier que Docker fonctionne
+sudo systemctl status docker
+docker ps  # Doit montrer vos conteneurs Sonarr/Radarr
+
+# Vérifier Python
+python3 --version  # Doit être >= 3.7
+
+# Vérifier les conteneurs Sonarr/Radarr
+docker inspect sonarr | grep IPAddress
+docker inspect radarr | grep IPAddress
+#### Étape 2 : Vérification de l'Environnement
 
 ```bash
 # Vérifier que Docker fonctionne
@@ -30,22 +103,15 @@ docker inspect sonarr | grep IPAddress
 docker inspect radarr | grep IPAddress
 ```
 
-### Étape 3 : Installation Automatique
-
-```bash
-# Installation en une commande
-curl -s https://raw.githubusercontent.com/VOTRE_USERNAME/QBittorrent-Error-Monitor/main/setup.sh | bash
-
-# OU pour un utilisateur spécifique
-curl -s https://raw.githubusercontent.com/VOTRE_USERNAME/QBittorrent-Error-Monitor/main/setup.sh | bash -s -- votre_utilisateur
-```
-
-### Étape 4 : Installation Manuelle (Recommandée)
+#### Étape 3 : Installation Système Manuelle
 
 ```bash
 # Clonage du repository
-git clone https://github.com/VOTRE_USERNAME/QBittorrent-Error-Monitor.git
+git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
 cd QBittorrent-Error-Monitor
+
+# Installation manuelle des dépendances Python
+pip3 install -r requirements.txt
 
 # Rendre les scripts exécutables
 chmod +x setup.sh install.sh test-suite.sh
@@ -54,7 +120,90 @@ chmod +x setup.sh install.sh test-suite.sh
 ./setup.sh
 ```
 
-### Étape 5 : Vérification Post-Installation
+## 🐳 Configuration Docker Avancée
+
+### Personnalisation du Docker Compose
+
+Éditez le fichier `docker-compose.yml` selon vos besoins :
+
+```yaml
+version: '3.8'
+
+services:
+  qbittorrent-monitor:
+    build: .
+    container_name: qbittorrent-error-monitor
+    restart: unless-stopped
+    
+    # Votre réseau Docker existant
+    networks:
+      - votre_reseau_docker  # Changez ici
+    
+    environment:
+      - CHECK_INTERVAL=180   # Vérification toutes les 3 minutes
+      - LOG_LEVEL=DEBUG      # Logs détaillés au début
+      - DRY_RUN=false       # Actions réelles
+      - TZ=Europe/Paris     # Votre timezone
+    
+    volumes:
+      # Persistance des logs
+      - ./logs:/app/logs
+      
+      # Configuration personnalisée
+      - ./config:/app/config:ro
+      
+      # Socket Docker pour accès aux conteneurs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # Chemin vers vos configs Sonarr/Radarr (à adapter)
+      - /votre/chemin/configs:/configs:ro
+
+networks:
+  votre_reseau_docker:
+    external: true
+```
+
+### Commandes Docker Utiles
+
+```bash
+# Construction manuelle de l'image
+docker build -t qbittorrent-error-monitor .
+
+# Démarrage avec Docker Compose
+docker-compose up -d
+
+# Voir les logs
+docker-compose logs -f
+
+# Arrêt
+docker-compose down
+
+# Shell dans le conteneur
+docker exec -it qbittorrent-error-monitor /bin/bash
+
+# Health check manuel
+docker exec qbittorrent-error-monitor python3 /app/qbittorrent-monitor.py --health-check
+```
+
+## ✅ Vérification Post-Installation
+
+### Pour l'Installation Docker
+
+```bash
+# Vérifier le statut du conteneur
+./docker-deploy.sh status
+
+# Voir les logs en temps réel
+./docker-deploy.sh logs
+
+# Test de santé complet
+./docker-deploy.sh test
+
+# Health check JSON
+docker exec qbittorrent-error-monitor python3 /app/qbittorrent-monitor.py --health-check | jq .
+```
+
+### Pour l'Installation Système
 
 ```bash
 # Vérifier le statut du service
