@@ -23,14 +23,32 @@ docker network ls --format "table {{.Name}}\t{{.Driver}}\t{{.Scope}}"
 
 echo ""
 echo "📋 Réseaux couramment utilisés :"
-echo "  • bridge (défaut Docker)"
-echo "  • traefik_proxy (Traefik)"
-echo "  • docker_default (Docker Compose)"
-echo "  • <nom_projet>_default (projet spécifique)"
+echo "  1. bridge (défaut Docker)"
+echo "  2. traefik_proxy (Traefik)"
+echo "  3. docker_default (Docker Compose)"
+echo "  4. Autre (saisie manuelle)"
 
 echo ""
-read -p "🌐 Quel réseau Docker utiliser ? [bridge] : " DOCKER_NETWORK
-DOCKER_NETWORK=${DOCKER_NETWORK:-bridge}
+read -p "🌐 Choisir le réseau [1-4] : " NETWORK_CHOICE
+
+case $NETWORK_CHOICE in
+    1|"")
+        DOCKER_NETWORK="bridge"
+        ;;
+    2)
+        DOCKER_NETWORK="traefik_proxy"
+        ;;
+    3)
+        DOCKER_NETWORK="docker_default"
+        ;;
+    4)
+        read -p "🌐 Entrez le nom du réseau : " DOCKER_NETWORK
+        ;;
+    *)
+        echo "❌ Choix invalide, utilisation de 'bridge'"
+        DOCKER_NETWORK="bridge"
+        ;;
+esac
 
 # Vérifier que le réseau existe
 if ! docker network inspect "$DOCKER_NETWORK" &> /dev/null; then
@@ -40,8 +58,8 @@ if ! docker network inspect "$DOCKER_NETWORK" &> /dev/null; then
     read -p "🌐 Veuillez entrer un réseau valide : " DOCKER_NETWORK
     
     if ! docker network inspect "$DOCKER_NETWORK" &> /dev/null; then
-        echo "❌ Réseau '$DOCKER_NETWORK' toujours introuvable. Arrêt."
-        exit 1
+        echo "❌ Réseau '$DOCKER_NETWORK' toujours introuvable. Utilisation de 'bridge'."
+        DOCKER_NETWORK="bridge"
     fi
 fi
 

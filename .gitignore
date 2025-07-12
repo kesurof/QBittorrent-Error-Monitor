@@ -69,9 +69,3 @@ htmlcov/
 install-temp.sh
 *-deprecated.*
 *-obsolete.*
-
-# Scripts de test et temporaires
-test-local.sh
-troubleshoot.sh
-install-fixed.sh
-*-test.*
