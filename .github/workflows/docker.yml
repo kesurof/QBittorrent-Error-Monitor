@@ -17,6 +17,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     
     steps:
     - name: Checkout
@@ -44,11 +45,15 @@ jobs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=sha
+          type=sha,prefix=sha-
           type=raw,value=latest,enable={{is_default_branch}}
-          type=raw,value=ssdv2,enable={{is_default_branch}}
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
+        labels: |
+          org.opencontainers.image.title=QBittorrent Error Monitor
+          org.opencontainers.image.description=Monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr
+          org.opencontainers.image.vendor=kesurof
+          org.opencontainers.image.licenses=MIT
     
     - name: Build and push
       uses: docker/build-push-action@v5
@@ -60,3 +65,12 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        # Assurer la visibilité publique du package
+        outputs: type=registry
+    
+    - name: Update package visibility
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      run: |
+        echo "Image pushed successfully to ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        echo "Available tags:"
+        echo "${{ steps.meta.outputs.tags }}"
