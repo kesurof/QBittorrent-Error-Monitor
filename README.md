@@ -35,11 +35,6 @@
 ## 🐳 **Image Docker**
 
 ```yaml
-# Image automatiquement construite et publiée via GitHub Actions
-# Multi-architecture : AMD64, ARM64, ARM v7
-image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest'
-```
-
 > 💡 **Aucune construction locale nécessaire !** L'image est automatiquement disponible sur GitHub Container Registry.
 
 ## 📁 **Installation**
@@ -47,16 +42,34 @@ image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest'
 ### **🚀 Installation rapide (recommandée)**
 
 ```bash
-# Installation en une commande
+# Installation interactive avec choix du réseau
 curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install.sh | bash
+```
+
+### **⚙️ Installation avancée (configuration complète)**
+
+```bash
+# Installation avec toutes les options (réseau, conteneurs, chemins)
+curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install-advanced.sh | bash
 ```
 
 ### **🔧 Installation Docker Compose**
 
 ```bash
-# Installation avec Docker Compose
+# Installation avec Docker Compose et fichier .env
 curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install-manual.sh | bash
 ```
+
+### **📋 Choix du réseau Docker**
+
+Lors de l'installation, vous pourrez choisir le réseau Docker :
+
+- **bridge** (défaut Docker) - Pour usage basique
+- **traefik_proxy** - Pour intégration Traefik 
+- **docker_default** - Pour stack Docker Compose
+- **Personnalisé** - Votre réseau spécifique
+
+> 💡 **Important** : Choisissez le même réseau que vos conteneurs Sonarr/Radarr/qBittorrent pour qu'ils puissent communiquer.
 
 ### **⚙️ Installation manuelle**
 
