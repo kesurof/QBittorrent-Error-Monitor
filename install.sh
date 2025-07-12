@@ -47,6 +47,61 @@ fi
 
 echo "✅ Réseau sélectionné : $DOCKER_NETWORK"
 
+# Configuration des chemins vers les applications
+echo ""
+echo "📂 Configuration des chemins vers Sonarr/Radarr :"
+
+# Détecter l'utilisateur actuel
+CURRENT_USER=$(whoami)
+DEFAULT_SEEDBOX_PATH="/home/$CURRENT_USER/seedbox/docker/$CURRENT_USER"
+
+echo "📋 Chemins suggérés :"
+echo "  1. Seedbox standard : $DEFAULT_SEEDBOX_PATH"
+echo "  2. Docker Compose local : ./data"
+echo "  3. Personnalisé"
+
+echo ""
+read -p "📂 Choisir le type de chemin [1-3] : " PATH_CHOICE
+
+case $PATH_CHOICE in
+    1|"")
+        CONFIGS_PATH="$DEFAULT_SEEDBOX_PATH"
+        ;;
+    2)
+        CONFIGS_PATH="./data"
+        ;;
+    3)
+        read -p "📂 Entrez le chemin personnalisé : " CONFIGS_PATH
+        ;;
+    *)
+        CONFIGS_PATH="$DEFAULT_SEEDBOX_PATH"
+        ;;
+esac
+
+# Vérifier que le chemin existe
+if [ ! -d "$CONFIGS_PATH" ]; then
+    echo "⚠️  Le chemin '$CONFIGS_PATH' n'existe pas."
+    echo "📋 Voulez-vous :"
+    echo "  1. Le créer automatiquement"
+    echo "  2. Utiliser un autre chemin"
+    read -p "Votre choix [1-2] : " CREATE_PATH_CHOICE
+    
+    if [ "$CREATE_PATH_CHOICE" = "1" ]; then
+        echo "🔧 Création du répertoire '$CONFIGS_PATH'..."
+        mkdir -p "$CONFIGS_PATH"
+        echo "✅ Répertoire '$CONFIGS_PATH' créé"
+    else
+        read -p "📂 Entrez un chemin existant : " CONFIGS_PATH
+        if [ ! -d "$CONFIGS_PATH" ]; then
+            echo "❌ Chemin '$CONFIGS_PATH' toujours introuvable. Utilisation de ./data"
+            CONFIGS_PATH="./data"
+            mkdir -p "$CONFIGS_PATH"
+        fi
+    fi
+fi
+
+echo "✅ Chemin sélectionné : $CONFIGS_PATH"
+
 # Configuration des répertoires
 INSTALL_DIR="${HOME}/qbittorrent-monitor"
 echo "📁 Création des répertoires dans : $INSTALL_DIR"
@@ -57,10 +112,12 @@ echo "📄 Téléchargement de la configuration..."
 curl -sSL -o "$INSTALL_DIR/config/config.yaml" \
     "https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/config/config.yaml"
 
-# Mise à jour de la configuration avec le réseau choisi
-echo "🔧 Configuration du réseau Docker..."
-sed -i.bak "s/network: \"bridge\"/network: \"$DOCKER_NETWORK\"/" "$INSTALL_DIR/config/config.yaml"
-rm -f "$INSTALL_DIR/config/config.yaml.bak"
+# Mise à jour de la configuration avec le réseau et les chemins choisis
+echo "🔧 Configuration du réseau et des chemins..."
+sed -i.bak "s|network: \"bridge\"|network: \"$DOCKER_NETWORK\"|" "$INSTALL_DIR/config/config.yaml"
+sed -i.bak2 "s|/configs/sonarr/config|$CONFIGS_PATH/sonarr/config|" "$INSTALL_DIR/config/config.yaml"
+sed -i.bak3 "s|/configs/radarr/config|$CONFIGS_PATH/radarr/config|" "$INSTALL_DIR/config/config.yaml"
+rm -f "$INSTALL_DIR/config/config.yaml.bak"*
 
 # Arrêter l'ancien conteneur s'il existe
 echo "🧹 Nettoyage de l'ancienne installation..."
@@ -79,6 +136,7 @@ docker run -d \
     -v "$INSTALL_DIR/config:/config:rw" \
     -v "$INSTALL_DIR/logs:/config/logs:rw" \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    -v "$CONFIGS_PATH:/configs:ro" \
     -p 8080:8080 \
     ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest
 
@@ -93,10 +151,15 @@ if docker ps | grep -q qbittorrent-monitor; then
     echo ""
     echo "📋 Configuration :"
     echo "   🌐 Réseau Docker : $DOCKER_NETWORK"
+    echo "   📂 Chemins configs : $CONFIGS_PATH"
     echo "   🌐 Health check : http://localhost:8080"
     echo "   📊 Logs : docker logs -f qbittorrent-monitor"
     echo "   📁 Configuration : $INSTALL_DIR/config/config.yaml"
     echo "   📝 Logs applicatifs : $INSTALL_DIR/logs/"
+    echo ""
+    echo "📂 Structure attendue :"
+    echo "   $CONFIGS_PATH/sonarr/config/config.xml"
+    echo "   $CONFIGS_PATH/radarr/config/config.xml"
     echo ""
     echo "🔧 Commandes utiles :"
     echo "   docker restart qbittorrent-monitor"
