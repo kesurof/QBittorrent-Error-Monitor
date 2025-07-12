@@ -29,7 +29,8 @@ COPY root/ /
 COPY qbittorrent-monitor.py /app/
 COPY config/config.yaml /defaults/
 
-# Create directories and set permissions
+# Create user and group 'abc' and set permissions
+RUN addgroup -S abc && adduser -S abc -G abc
 RUN mkdir -p /config /app && \
     chown abc:abc /app /config /defaults
 
