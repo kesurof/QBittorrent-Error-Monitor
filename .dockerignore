@@ -1,23 +1,28 @@
-# Fichiers et dossiers à ignorer lors du build Docker
+# Fichiers et répertoires à ignorer lors du build Docker
 
 # Git
 .git/
 .gitignore
+.gitattributes
 
 # Documentation
-README.md
-INSTALL-SERVER.md
-CONTRIBUTING.md
+README*.md
+INSTALL*.md
 CHANGELOG.md
+docs/
 
-# Scripts d'installation système (non utiles dans le conteneur)
+# Scripts de développement et déploiement
 setup.sh
 install.sh
+test-suite.sh
+publish-docker.sh
+deploy*.sh
+validate*.sh
 
 # Tests
-test-suite.sh
 test_output/
 .pytest_cache/
+.coverage
 
 # Logs et données temporaires
 logs/
@@ -27,6 +32,44 @@ stats.json
 qbittorrent-stats.json
 temp/
 tmp/
+.cache/
+
+# Configuration locale
+.env
+.env.local
+docker-compose.override.yml
+
+# IDE et éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.tox/
+venv/
+env/
+
+# Docker
+Dockerfile.dev
+docker-compose.dev.yml
+
+# Backup et temporaires
+*.backup
+*.bak
+*.old
 
 # Configuration locale (sera montée en volume)
 config/local.yaml

@@ -1,40 +1,48 @@
-# QBittorrent Error Monitor v2.0
-# Image Docker basée sur Python Alpine pour optimiser la taille et la sécurité
+# QBittorrent Error Monitor
+# Image Docker compatible ssdv2
 
 FROM python:3.11-alpine
 
 # Métadonnées
-LABEL maintainer="QBittorrent Error Monitor Team"
+LABEL maintainer="QBittorrent Error Monitor"
 LABEL version="2.0"
-LABEL description="Production-ready QBittorrent Error Monitor with enhanced security"
+LABEL description="QBittorrent Error Monitor for ssdv2 environment"
 
-# Variables d'environnement par défaut
+# Variables d'environnement
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    USER_UID=1000 \
-    USER_GID=1000 \
-    APP_USER=qbmonitor
+    PUID=1000 \
+    PGID=1000
 
 # Installation des dépendances système
 RUN apk add --no-cache \
     curl \
     bash \
     tzdata \
-    docker-cli \
+    shadow \
     && rm -rf /var/cache/apk/*
 
-# Création de l'utilisateur non-root pour la sécurité
-RUN addgroup -g ${USER_GID} ${APP_USER} && \
-    adduser -u ${USER_UID} -G ${APP_USER} -D -s /bin/bash ${APP_USER}
+# Script d'entrée pour gérer les UID/GID dynamiques (compatible ssdv2)
+RUN echo '#!/bin/bash' > /entrypoint.sh && \
+    echo 'groupmod -o -g "$PGID" abc' >> /entrypoint.sh && \
+    echo 'usermod -o -u "$PUID" abc' >> /entrypoint.sh && \
+    echo 'chown -R abc:abc /app/logs' >> /entrypoint.sh && \
+    echo 'exec gosu abc "$@"' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+# Installation de gosu pour la gestion des permissions
+RUN apk add --no-cache gosu
+
+# Création de l'utilisateur par défaut (sera modifié par l'entrypoint)
+RUN addgroup -g 1000 abc && \
+    adduser -u 1000 -G abc -D -s /bin/bash abc
 
 # Répertoires de travail
 WORKDIR /app
-RUN mkdir -p /app/config /app/logs && \
-    chown -R ${APP_USER}:${APP_USER} /app
+RUN mkdir -p /app/config /app/logs
 
-# Copie des fichiers de requirements en premier (pour le cache Docker)
+# Copie des fichiers de requirements
 COPY requirements.txt .
 
 # Installation des dépendances Python
@@ -44,23 +52,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY qbittorrent-monitor.py .
 COPY config/ ./config/
 
-# Application des permissions
-RUN chmod +x qbittorrent-monitor.py && \
-    chown -R ${APP_USER}:${APP_USER} /app
+# Permissions par défaut
+RUN chmod +x qbittorrent-monitor.py
 
-# Basculement vers l'utilisateur non-root
-USER ${APP_USER}
-
-# Volumes pour persistance des données
+# Volumes pour les données
 VOLUME ["/app/logs", "/app/config"]
-
-# Port pour health check (optionnel)
-EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
     CMD python3 /app/qbittorrent-monitor.py --health-check || exit 1
 
-# Point d'entrée par défaut
-ENTRYPOINT ["python3", "/app/qbittorrent-monitor.py"]
-CMD ["--config", "/app/config/config.yaml", "--interval", "300"]
+# Utilisation de l'entrypoint pour la gestion des permissions
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Commande par défaut
+CMD ["python3", "/app/qbittorrent-monitor.py", "--config", "/app/config/config.yaml", "--interval", "300"]

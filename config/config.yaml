@@ -1,53 +1,64 @@
-# Configuration QBittorrent Error Monitor
-# Ce fichier peut être personnalisé selon vos besoins
+# Configuration QBittorrent Monitor pour ssdv2
+# Auto-configuration activée pour déploiement simple
 
 # Configuration générale
-general:
-  check_interval: 300  # Intervalle en secondes
-  log_level: "INFO"    # DEBUG, INFO, WARNING, ERROR
-  max_retries: 3
-  retry_backoff: 2     # Facteur d'attente exponentielle
-  dry_run: false       # Mode test sans actions
+monitor:
+  check_interval: 300  # 5 minutes
+  log_level: "INFO"
+  dry_run: false
+  timezone: "Europe/Paris"
+
+# Configuration qBittorrent (auto-détection)
+qbittorrent:
+  auto_detect: true
+  container_names:
+    - "qbittorrent"
+    - "qbittorrent-vpn"
+  web_ui:
+    host: "localhost"
+    port: 8080
+    username: "admin"
+    # password: auto-détecté
+
+# Configuration Sonarr (auto-détection)
+sonarr:
+  enabled: true
+  auto_detect: true
+  container_names:
+    - "sonarr"
+  config_paths:
+    - "/configs/sonarr/config"
+  api:
+    auto_detect_key: true
+
+# Configuration Radarr (auto-détection)
+radarr:
+  enabled: true
+  auto_detect: true
+  container_names:
+    - "radarr"
+  config_paths:
+    - "/configs/radarr/config"
+  api:
+    auto_detect_key: true
 
 # Configuration Docker
 docker:
-  network: "traefik_proxy"
-  network_fallback: "bridge"
-  timeout: 5
-  container_timeout: 10
+  network: "traefik_proxy"  # Réseau par défaut ssdv2
+  socket_path: "/var/run/docker.sock"
 
-# Configuration HTTP
-http:
-  timeout: 5
-  user_agent: "QBittorrent-Monitor/2.0"
-  max_connections: 10
-
-# Configuration des services
-services:
-  sonarr:
-    enabled: true
-    port: 8989
-    api_version: "v3"
-    container_name: "sonarr"
-    search_command: "missingEpisodeSearch"
-    max_errors_per_cycle: 10
-  
-  radarr:
-    enabled: true
-    port: 7878
-    api_version: "v3"
-    container_name: "radarr"
-    search_command: "MissingMoviesSearch"
-    max_errors_per_cycle: 10
-
-# Patterns d'erreurs à détecter
-error_patterns:
-  - "qBittorrent is reporting an error"
-  - "qBittorrent has returned an error"
-  - "Connection to qBittorrent failed"
-
-# Configuration des logs
+# Logging
 logging:
+  file_path: "/app/logs/qbittorrent-monitor.log"
+  max_size_mb: 50
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Actions
+actions:
+  restart_containers: true
+  notify_errors: true
+  statistics: true
   max_file_size: "10MB"
   backup_count: 5
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

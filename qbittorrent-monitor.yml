@@ -1,0 +1,38 @@
+---
+pgrole: 'qbittorrent-monitor'
+intport: '8080'
+image: 'qbittorrent-error-monitor:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/app/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/logs:/app/logs:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+  - '/var/run/docker.sock:/var/run/docker.sock:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  CHECK_INTERVAL: '300'
+  LOG_LEVEL: 'INFO'
+  DRY_RUN: 'false'
+  TZ: 'Europe/Paris'
+specific_docker_info:
+  # Port optionnel pour health check
+  ports:
+    - '8080:8080'
+  # Redémarrage automatique
+  restart_policy: unless-stopped
+  # Privilèges pour accéder au socket Docker (lecture seule)
+  security_opt:
+    - no-new-privileges:true
+  # Ressources limitées
+  mem_limit: 128m
+  cpus: 0.25
+
+# Configuration Traefik (optionnelle - pour interface web future)
+#extra_labels:
+#  traefik.enable: 'true'
+#  traefik.http.routers.qbittorrent-monitor-rtr.entrypoints: 'http,https'
+#  traefik.http.routers.qbittorrent-monitor-rtr.rule: 'Host(`qbmonitor.{{ domain }}`)'
+#  traefik.http.routers.qbittorrent-monitor-rtr.tls: 'true'
+#  traefik.http.routers.qbittorrent-monitor-rtr.service: 'qbittorrent-monitor-svc'
+#  traefik.http.services.qbittorrent-monitor-svc.loadbalancer.server.port: '8080'

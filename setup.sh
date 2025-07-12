@@ -85,11 +85,26 @@ detect_config_paths() {
     
     local config_base=""
     local -a possible_paths=(
+        # Environnement ssdv2 (priorité)
         "$HOME/seedbox/docker/$USER_INPUT"
+        "/home/$USER_INPUT/seedbox/docker/$USER_INPUT"
+        # Autres environnements
         "$HOME/.config"
         "/opt/seedbox/docker/docker/$USER_INPUT"
         "/opt/docker/$USER_INPUT"
+        "$HOME/docker/$USER_INPUT"
     )
+    
+    # Détection spéciale pour ssdv2
+    if [[ -d "/home/$USER_INPUT/seedbox/docker/$USER_INPUT" ]]; then
+        local ssdv2_path="/home/$USER_INPUT/seedbox/docker/$USER_INPUT"
+        if [[ -d "$ssdv2_path/sonarr" ]] || [[ -d "$ssdv2_path/radarr" ]]; then
+            config_base="$ssdv2_path"
+            log_info "Environnement ssdv2 détecté: $config_base"
+            echo "$config_base"
+            return 0
+        fi
+    fi
     
     for path in "${possible_paths[@]}"; do
         # Validation du chemin avant vérification
@@ -104,6 +119,13 @@ detect_config_paths() {
     
     if [[ -z "$config_base" ]]; then
         log_warn "Configuration non détectée automatiquement"
+        
+        # Suggestions spécifiques pour ssdv2
+        echo ""
+        echo "💡 Pour un environnement ssdv2, essayez :"
+        echo "   /home/$USER_INPUT/seedbox/docker/$USER_INPUT"
+        echo "   $HOME/seedbox/docker/$USER_INPUT"
+        echo ""
         
         while true; do
             read -rp "Entrez le chemin vers vos configs Sonarr/Radarr: " config_base
@@ -336,32 +358,96 @@ main() {
     fi
     
     log_step "Lancement de l'installation système"
-    if sudo ./install.sh; then
+    
+    # Détection de l'environnement
+    local deployment_mode="systemd"
+    
+    # Vérification si c'est un environnement ssdv2/Docker
+    if command -v docker &> /dev/null && docker network ls | grep -q "traefik_proxy"; then
         echo ""
-        echo -e "${GREEN}🎉 QBittorrent Monitor installé avec succès !${NC}"
+        log_info "Environnement Docker/ssdv2 détecté !"
         echo ""
-        echo "📊 Informations du service:"
-        echo "   Status: $(sudo systemctl is-active qbittorrent-monitor 2>/dev/null || echo 'Inactif')"
-        echo "   Logs: tail -f ~/logs/qbittorrent-error-monitor.log"
-        echo "   Stats: cat ~/logs/qbittorrent-stats.json"
+        echo "🐳 Deux modes de déploiement disponibles :"
+        echo "   1) Service systemd (classique)"
+        echo "   2) Conteneur Docker (recommandé pour ssdv2)"
         echo ""
-        echo "⚙️  Commandes utiles:"
-        echo "   sudo systemctl status qbittorrent-monitor"
-        echo "   sudo systemctl restart qbittorrent-monitor"
-        echo "   sudo journalctl -u qbittorrent-monitor -f"
-        echo ""
-        echo "🧪 Tests disponibles:"
-        echo "   python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --test"
-        echo "   python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --health-check"
-        echo "   python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --dry-run"
-        echo ""
-        echo "🔗 Documentation: https://github.com/kesurof/QBittorrent-Error-Monitor"
-    else
-        log_error "Échec de l'installation système"
-        echo "📋 Consultez les logs pour diagnostiquer le problème"
-        echo "💡 Essayez: sudo journalctl -u qbittorrent-monitor -n 20"
-        exit 1
+        
+        while true; do
+            read -rp "Choisissez le mode de déploiement (1/2): " choice
+            case $choice in
+                1)
+                    deployment_mode="systemd"
+                    break
+                    ;;
+                2)
+                    deployment_mode="docker"
+                    break
+                    ;;
+                *)
+                    echo "Veuillez choisir 1 ou 2"
+                    ;;
+            esac
+        done
     fi
+    
+    case $deployment_mode in
+        "docker")
+            log_step "Déploiement Docker ssdv2"
+            
+            # Copie du script de déploiement Docker
+            if [[ -f "$SCRIPT_DIR/deploy-ssdv2.sh" ]]; then
+                cp "$SCRIPT_DIR/deploy-ssdv2.sh" ./
+                chmod +x deploy-ssdv2.sh
+            fi
+            
+            echo ""
+            echo -e "${GREEN}🐳 Configuration Docker prête !${NC}"
+            echo ""
+            echo "📋 Étapes suivantes :"
+            echo "   1. Vérifiez la configuration : cat config/config.yaml"
+            echo "   2. Lancez le déploiement : ./deploy-ssdv2.sh start"
+            echo ""
+            echo "🔧 Commandes Docker disponibles :"
+            echo "   ./deploy-ssdv2.sh start    # Déployer le monitor"
+            echo "   ./deploy-ssdv2.sh status   # Vérifier le status"
+            echo "   ./deploy-ssdv2.sh logs     # Voir les logs"
+            echo "   ./deploy-ssdv2.sh restart  # Redémarrer"
+            echo ""
+            echo "🌐 Intégration ssdv2 :"
+            echo "   - Réseau : traefik_proxy"
+            echo "   - Configs : $config_path"
+            echo "   - Variables : MYUID/MYGID automatiques"
+            echo ""
+            ;;
+        "systemd")
+            if sudo ./install.sh; then
+                echo ""
+                echo -e "${GREEN}🎉 QBittorrent Monitor installé avec succès !${NC}"
+                echo ""
+                echo "📊 Informations du service:"
+                echo "   Status: $(sudo systemctl is-active qbittorrent-monitor 2>/dev/null || echo 'Inactif')"
+                echo "   Logs: tail -f ~/logs/qbittorrent-error-monitor.log"
+                echo "   Stats: cat ~/logs/qbittorrent-stats.json"
+                echo ""
+                echo "⚙️  Commandes utiles:"
+                echo "   sudo systemctl status qbittorrent-monitor"
+                echo "   sudo systemctl restart qbittorrent-monitor"
+                echo "   sudo journalctl -u qbittorrent-monitor -f"
+                echo ""
+                echo "🧪 Tests disponibles:"
+                echo "   python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --test"
+                echo "   python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --health-check"
+                echo "   python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --dry-run"
+                echo ""
+                echo "🔗 Documentation: https://github.com/kesurof/QBittorrent-Error-Monitor"
+            else
+                log_error "Échec de l'installation système"
+                echo "📋 Consultez les logs pour diagnostiquer le problème"
+                echo "💡 Essayez: sudo journalctl -u qbittorrent-monitor -n 20"
+                exit 1
+            fi
+            ;;
+    esac
 }
 
 # Protection contre l'exécution accidentelle

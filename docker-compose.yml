@@ -1,53 +1,52 @@
 version: '3.8'
 
+# Docker Compose d'exemple pour test local
+# Pour ssdv2, utilisez le fichier qbittorrent-monitor.yml
+
 services:
   qbittorrent-monitor:
     build: .
     container_name: qbittorrent-error-monitor
     restart: unless-stopped
     
-    # Configuration réseau - connexion au réseau de vos autres conteneurs
-    networks:
-      - traefik_proxy  # Remplacez par votre réseau Docker
-    
-    # Variables d'environnement
+    # Variables d'environnement (compatible ssdv2)
     environment:
+      - PUID=${MYUID:-1000}
+      - PGID=${MYGID:-1000}
       - CHECK_INTERVAL=300
       - LOG_LEVEL=INFO
-      - DOCKER_NETWORK=traefik_proxy
       - DRY_RUN=false
-      - TZ=Europe/Paris  # Ajustez votre timezone
+      - TZ=Europe/Paris
     
-    # Volumes pour persistance et accès aux configurations
+    # Volumes (adaptez les chemins selon votre environnement)
     volumes:
       # Logs persistants
       - ./logs:/app/logs
       
-      # Configuration personnalisée
+      # Configuration
       - ./config:/app/config:ro
       
-      # Accès au socket Docker pour inspecter les conteneurs
+      # Socket Docker (lecture seule)
       - /var/run/docker.sock:/var/run/docker.sock:ro
       
-      # Accès aux configurations Sonarr/Radarr (ajustez les chemins)
-      - /home/kesurof/.config:/configs:ro
-      # OU si vos configs sont ailleurs :
-      # - /opt/seedbox/docker/kesurof:/configs:ro
+      # Configurations Sonarr/Radarr (adaptez selon votre setup)
+      - ${HOME}/.config:/configs:ro
+      # OU pour ssdv2 :
+      # - /settings/storage/docker/${USER}:/configs:ro
+      
+      # Timezone
+      - /etc/localtime:/etc/localtime:ro
     
-    # Limites de ressources pour la sécurité
+    # Réseau (utilisez votre réseau existant)
+    networks:
+      - traefik_proxy
+    
+    # Limites de ressources
     deploy:
       resources:
         limits:
           memory: 128M
           cpus: '0.25'
-        reservations:
-          memory: 64M
-          cpus: '0.1'
-    
-    # Dépendances - attend que les services soient démarrés
-    depends_on:
-      - sonarr
-      - radarr
     
     # Health check
     healthcheck:
@@ -57,27 +56,14 @@ services:
       retries: 3
       start_period: 30s
     
-    # Labels pour organisation
+    # Labels
     labels:
-      - "com.docker.compose.project=media-automation"
       - "com.qbittorrent-monitor.version=2.0"
+      - "com.qbittorrent-monitor.environment=docker"
 
-  # Exemple de services Sonarr/Radarr (si pas déjà définis)
-  sonarr:
-    image: linuxserver/sonarr:latest
-    container_name: sonarr
-    networks:
-      - traefik_proxy
-    # ... votre configuration existante
-    
-  radarr:
-    image: linuxserver/radarr:latest
-    container_name: radarr
-    networks:
-      - traefik_proxy
-    # ... votre configuration existante
-
-# Réseau externe (doit exister)
+# Réseau (créez-le ou utilisez external: true si existant)
 networks:
   traefik_proxy:
     external: true
+    # Ou si le réseau n'existe pas :
+    # driver: bridge
