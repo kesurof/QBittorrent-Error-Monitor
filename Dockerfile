@@ -14,7 +14,7 @@ RUN \
     py3-pip \
     curl && \
   echo "**** install pip packages ****" && \
-  pip3 install --no-cache-dir --break-system-packages \
+  pip3 install --no-cache-dir \
     requests \
     pyyaml && \
   echo "**** cleanup ****" && \
