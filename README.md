@@ -1,9 +1,6 @@
 # QBittorrent Error Monitor
 
-🚀 **Monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr**
-
-[![GitHub Actions](https://github.com/kesurof/QBittorrent-Error-Monitor/actions/workflows/docker.yml/badge.svg)](https://github.com/kesurof/QBittorrent-Error-Monitor/actions)
-[![GitHub Container Registry](https://ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor)](https://github.com/kesurof/QBittorrent-Error-Monitor/pkgs/container/qbittorrent-error-monitor%2Fqbittorrent-monitor)
+🚀 **Script Python pour monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr**
 
 ## 🎯 **Fonctionnalités principales**
 
@@ -11,7 +8,7 @@
 - **Détection automatique** des erreurs qBittorrent en temps réel
 - **Surveillance continue** des logs et états des torrents
 - **Patterns d'erreur configurables** (timeout, DNS, tracker, ratio...)
-- **Auto-découverte** des conteneurs qBittorrent, Sonarr, Radarr
+- **Connexion directe** aux APIs qBittorrent, Sonarr, Radarr
 
 ### 🛠️ **Actions automatiques**
 - **Suppression intelligente** des téléchargements échoués
@@ -19,143 +16,82 @@
 - **Déclenchement immédiat** de nouvelles recherches Sonarr/Radarr
 - **Notifications** optionnelles (logs détaillés)
 
-### 🐳 **Intégration Docker**
-- **Image pré-construite** sur GitHub Container Registry
-- **Auto-configuration** complète au démarrage
-- **Permissions** PUID/PGID configurables
-- **Health check** intégré (port 8080)
-- **Multi-architecture** : AMD64, ARM64, ARM v7
-
-### 📊 **Monitoring et debug**
-- **Logs structurés** avec niveaux configurables
-- **Métriques de performance** 
-- **Mode test** et **dry-run** pour validation
-- **Interface health check** pour supervision
+### � **Script Python simple**
+- **Aucune dépendance Docker** requise
+- **Installation simple** avec pip
+- **Configuration YAML** facile
+- **Logs structurés** avec rotation automatique
 
 ## 📁 **Installation**
 
-> 💡 **Aucune construction locale nécessaire !** L'image est automatiquement disponible sur GitHub Container Registry.
-
-### **🚀 Installation rapide (recommandée)**
+### **🚀 Installation rapide**
 
 ```bash
-# Installation interactive avec choix du réseau et des chemins
-curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install.sh | bash
+# Cloner le repository
+git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
+cd QBittorrent-Error-Monitor
+
+# Installer les dépendances
+pip install -r requirements.txt
+
+# Copier et éditer la configuration
+cp config/config.yaml config/config.yaml.local
+nano config/config.yaml.local
+
+# Lancer le script
+python qbittorrent-monitor.py --config config/config.yaml.local
 ```
 
-**Fonctionnalités du script d'installation :**
-- 🌐 **Sélection interactive du réseau Docker** (bridge, traefik_proxy, docker_default, personnalisé)
-- 📂 **Configuration automatique des chemins** (seedbox, local, personnalisé)
-- 🔧 **Gestion des permissions** avec sudo si nécessaire
-- 🛡️ **Gestion d'erreurs robuste** (fallback, restauration)
-- ✅ **Vérifications de santé** automatiques
-
-### **📋 Choix du réseau Docker**
-
-Lors de l'installation, vous pourrez choisir le réseau Docker :
-
-- **1. bridge** (défaut Docker) - Pour usage basique
-- **2. traefik_proxy** - Pour intégration Traefik 
-- **3. docker_default** - Pour stack Docker Compose
-- **4. Personnalisé** - Votre réseau spécifique
-
-> 💡 **Important** : Choisissez le même réseau que vos conteneurs Sonarr/Radarr/qBittorrent pour qu'ils puissent communiquer.
-
-### **📂 Configuration des chemins**
-
-Le script détecte automatiquement votre environnement :
-
-- **1. Seedbox standard** : `/home/USER/seedbox/docker/USER/` (auto-détecté)
-- **2. Docker Compose local** : `./data`
-- **3. Personnalisé** : Votre chemin spécifique
-
-### **⚙️ Installation manuelle**
+### **� Installation avec environnement virtuel (recommandé)**
 
 ```bash
-# Créer les répertoires
-mkdir -p ~/qbittorrent-monitor/{config,logs}
+# Cloner le repository
+git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
+cd QBittorrent-Error-Monitor
 
-# Télécharger la configuration
-curl -sSL -o ~/qbittorrent-monitor/config/config.yaml \
-    https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/config/config.yaml
+# Créer un environnement virtuel
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate     # Windows
 
-# Démarrer le conteneur
-docker run -d \
-  --name qbittorrent-monitor \
-  --restart unless-stopped \
-  --network bridge \
-  -e PUID=$(id -u) \
-  -e PGID=$(id -g) \
-  -e TZ=Europe/Paris \
-  -v ~/qbittorrent-monitor/config:/config:rw \
-  -v ~/qbittorrent-monitor/logs:/config/logs:rw \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  -v /path/to/your/configs:/configs:ro \
-  -p 8080:8080 \
-  ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest
+# Installer les dépendances
+pip install -r requirements.txt
+
+# Configurer et lancer
+cp config/config.yaml config/config.yaml.local
+python qbittorrent-monitor.py --config config/config.yaml.local
 ```
-
-> ⚠️ **Note** : Remplacez `/path/to/your/configs` par le chemin réel vers vos configurations Sonarr/Radarr
-
-## 🔄 **Flux d'installation simplifié**
-
-```mermaid
-graph LR
-    A[Exécution script] --> B[Détection réseau]
-    B --> C[Choix utilisateur]
-    C --> D[Configuration chemins]
-    D --> E[Téléchargement config]
-    E --> F[Démarrage conteneur]
-    F --> G[Vérification santé]
-```
-
-1. **Script d'installation** → Détection automatique de l'environnement
-2. **Choix utilisateur** → Réseau et chemins de configuration
-3. **Auto-configuration** → Téléchargement et adaptation de la config
-4. **Démarrage** → Conteneur lancé avec les bons paramètres
-5. **Vérification** → Health check et validation du fonctionnement
 
 ## ⚙️ **Configuration**
 
-### **Variables d'environnement**
+### **Fichier de configuration**
 
-```bash
-# Variables principales
-PUID=1000                    # ID utilisateur
-PGID=1000                    # ID groupe  
-TZ=Europe/Paris              # Fuseau horaire
-
-# Configuration application
-CHECK_INTERVAL=300           # Intervalle vérification (sec)
-LOG_LEVEL=INFO              # DEBUG|INFO|WARNING|ERROR
-DRY_RUN=false               # Mode simulation
-HTTP_PORT=8080              # Port health check
-```
-
-### **Structure de configuration attendue**
-
-```bash
-# Structure automatiquement créée
-~/qbittorrent-monitor/
-├── config/
-│   └── config.yaml              # Configuration principale
-└── logs/
-    └── qbittorrent-monitor.log  # Logs application
-
-# Structure des configurations externes
-/path/to/configs/
-├── sonarr/
-│   └── config/
-│       └── config.xml           # Configuration Sonarr
-└── radarr/
-    └── config/
-        └── config.xml           # Configuration Radarr
-```
-
-### **Personnalisation des patterns d'erreur**
+Éditez `config/config.yaml.local` selon vos besoins :
 
 ```yaml
-# Éditez ~/qbittorrent-monitor/config/config.yaml après le premier démarrage
+# Configuration QBittorrent Error Monitor
+qbittorrent:
+  host: "localhost"
+  port: 8080
+  username: "admin"
+  password: "adminadmin"
+  use_https: false
+
+applications:
+  sonarr:
+    enabled: true
+    url: "http://localhost:8989"
+    api_key: "your_sonarr_api_key"
+  radarr:
+    enabled: true
+    url: "http://localhost:7878"
+    api_key: "your_radarr_api_key"
+
+monitoring:
+  check_interval: 300           # Intervalle en secondes
+  max_retries: 3
+  
 error_patterns:
   connection_errors:
     - "Connection timed out"
@@ -171,149 +107,210 @@ error_patterns:
     - "No space left on device"
     - "Permission denied"
     - "Disk full"
+
+logging:
+  level: "INFO"                 # DEBUG|INFO|WARNING|ERROR
+  file: "logs/monitor.log"
+  max_size_mb: 10
+  backup_count: 5
 ```
 
-## 🔧 **Commandes utiles**
+### **Variables d'environnement**
 
-### **Monitoring en temps réel**
+Vous pouvez aussi utiliser des variables d'environnement :
 
 ```bash
-# Logs du conteneur
-docker logs -f qbittorrent-monitor
-
-# Logs de l'application
-tail -f ~/qbittorrent-monitor/logs/qbittorrent-monitor.log
-
-# Status du conteneur
-docker ps | grep qbittorrent-monitor
-
-# Health check
-curl -f http://localhost:8080/health || echo "Service KO"
+export QB_HOST="localhost"
+export QB_PORT="8080"
+export QB_USERNAME="admin"
+export QB_PASSWORD="adminadmin"
+export SONARR_URL="http://localhost:8989"
+export SONARR_API_KEY="your_key"
+export RADARR_URL="http://localhost:7878"
+export RADARR_API_KEY="your_key"
+export LOG_LEVEL="INFO"
 ```
 
-### **Tests et debug**
+## 🔧 **Utilisation**
+
+### **Lancement du script**
 
 ```bash
-# Test de configuration
-docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --health-check
+# Lancement normal
+python qbittorrent-monitor.py
 
-# Mode test (un cycle seulement)
-docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --test
+# Avec configuration personnalisée
+python qbittorrent-monitor.py --config /path/to/config.yaml
 
-# Mode dry-run (simulation)
-docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --dry-run --test
+# Mode test (un seul cycle)
+python qbittorrent-monitor.py --test
+
+# Mode dry-run (simulation sans actions)
+python qbittorrent-monitor.py --dry-run
+
+# Mode debug
+python qbittorrent-monitor.py --debug
+
+# Aide
+python qbittorrent-monitor.py --help
 ```
 
-### **Gestion du service**
+### **Service système (Linux)**
+
+Créer un service systemd pour lancement automatique :
 
 ```bash
-# Redémarrage
-docker restart qbittorrent-monitor
+# Créer le fichier service
+sudo nano /etc/systemd/system/qbittorrent-monitor.service
+```
 
-# Arrêt
-docker stop qbittorrent-monitor
+```ini
+[Unit]
+Description=QBittorrent Error Monitor
+After=network.target
 
-# Suppression complète
-docker stop qbittorrent-monitor
-docker rm qbittorrent-monitor
+[Service]
+Type=simple
+User=your_user
+WorkingDirectory=/path/to/QBittorrent-Error-Monitor
+ExecStart=/path/to/venv/bin/python qbittorrent-monitor.py --config config/config.yaml.local
+Restart=always
+RestartSec=10
 
-# Réinstallation propre
-curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install.sh | bash
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# Activer et démarrer le service
+sudo systemctl enable qbittorrent-monitor
+sudo systemctl start qbittorrent-monitor
+
+# Vérifier le statut
+sudo systemctl status qbittorrent-monitor
+
+# Voir les logs
+sudo journalctl -f -u qbittorrent-monitor
+```
+
+### **Tâche cron**
+
+Pour exécuter périodiquement :
+
+```bash
+# Éditer crontab
+crontab -e
+
+# Ajouter ligne pour exécution toutes les 5 minutes
+*/5 * * * * cd /path/to/QBittorrent-Error-Monitor && /path/to/venv/bin/python qbittorrent-monitor.py --test
+```
+
+## 📊 **Logs et monitoring**
+
+### **Structure des logs**
+
+```bash
+logs/
+├── monitor.log              # Log principal
+├── monitor.log.1            # Rotation automatique
+├── monitor.log.2
+└── ...
+```
+
+### **Commandes utiles**
+
+```bash
+# Voir les logs en temps réel
+tail -f logs/monitor.log
+
+# Chercher les erreurs
+grep "ERROR" logs/monitor.log
+
+# Statistiques
+grep "Torrent supprimé" logs/monitor.log | wc -l
+grep "Recherche déclenchée" logs/monitor.log | wc -l
+
+# Nettoyer les anciens logs
+find logs/ -name "*.log.*" -mtime +30 -delete
 ```
 
 ## 🔧 **Dépannage**
 
 ### **Problèmes courants**
 
-#### **1. Erreur de permissions lors de l'installation**
+#### **1. Erreur de connexion qBittorrent**
 ```bash
-# Le script gère automatiquement les permissions avec sudo
-# Si problème persistant, vérifiez :
-ls -la ~/qbittorrent-monitor/
-sudo chown -R $(whoami):$(whoami) ~/qbittorrent-monitor/
+# Vérifier la connexion
+curl -u admin:adminadmin http://localhost:8080/api/v2/app/version
+
+# Tester avec le script
+python qbittorrent-monitor.py --test --debug
 ```
 
-#### **2. Conteneur qui ne démarre pas**
+#### **2. APIs Sonarr/Radarr non accessibles**
 ```bash
-# Vérifier les logs
-docker logs qbittorrent-monitor
-
-# Vérifier la configuration
-cat ~/qbittorrent-monitor/config/config.yaml
-
-# Redémarrer avec debug
-docker run --rm -it \
-  -v ~/qbittorrent-monitor/config:/config:rw \
-  ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest \
-  python3 /app/qbittorrent-monitor.py --test
+# Vérifier les URLs et clés API
+curl -H "X-Api-Key: YOUR_KEY" http://localhost:8989/api/v3/system/status
+curl -H "X-Api-Key: YOUR_KEY" http://localhost:7878/api/v3/system/status
 ```
 
-#### **3. Problèmes de réseau Docker**
+#### **3. Permissions de fichiers**
 ```bash
-# Lister les réseaux disponibles
-docker network ls
-
-# Vérifier que les conteneurs sont sur le même réseau
-docker network inspect NETWORK_NAME
-
-# Redémarrer avec le bon réseau
-docker stop qbittorrent-monitor
-docker rm qbittorrent-monitor
-# Relancer l'installation avec le bon réseau
+# Corriger les permissions
+chmod +x qbittorrent-monitor.py
+chmod 644 config/config.yaml.local
+mkdir -p logs && chmod 755 logs
 ```
 
-#### **4. Applications non détectées**
+#### **4. Dépendances manquantes**
 ```bash
-# Vérifier que les chemins de configuration sont corrects
-docker exec qbittorrent-monitor ls -la /configs/
-docker exec qbittorrent-monitor ls -la /configs/sonarr/config/
-docker exec qbittorrent-monitor ls -la /configs/radarr/config/
+# Réinstaller les dépendances
+pip install --force-reinstall -r requirements.txt
 
-# Vérifier la configuration
-docker exec qbittorrent-monitor cat /config/config.yaml
+# Vérifier l'installation
+python -c "import requests, yaml; print('OK')"
 ```
 
-### **Nettoyage complet**
+## 🛠️ **Développement**
 
-```bash
-# Supprimer complètement l'installation
-docker stop qbittorrent-monitor 2>/dev/null || true
-docker rm qbittorrent-monitor 2>/dev/null || true
-rm -rf ~/qbittorrent-monitor/
+### **Structure du projet**
 
-# Réinstaller proprement
-curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install.sh | bash
+```
+QBittorrent-Error-Monitor/
+├── qbittorrent-monitor.py   # Script principal
+├── config/
+│   └── config.yaml          # Configuration par défaut
+├── logs/                    # Logs (créé automatiquement)
+├── requirements.txt         # Dépendances Python
+└── README.md               # Documentation
 ```
 
-## 🏗️ **Architecture & Développement**
+### **Dépendances Python**
 
-### **🔄 CI/CD Pipeline**
-- **GitHub Actions** : Build automatique multi-architecture à chaque push
-- **GitHub Container Registry** : Stockage et distribution des images
-- **Multi-arch** : Support AMD64, ARM64, ARM v7
-- **Tags** : `latest`, version git SHA
+```python
+requests>=2.28.0
+PyYAML>=6.0
+```
 
-### **🛠️ Structure du projet**
+### **Contribution**
 
-| Fichier | Usage | Description |
-|---------|-------|-------------|
-| `install.sh` | **✅ RECOMMANDÉ** | Script d'installation unique et robuste |
-| `qbittorrent-monitor.py` | **🐍 Application** | Application Python principale |
-| `config/config.yaml` | **⚙️ Configuration** | Configuration par défaut |
-| `entrypoint.sh` | **🐳 Docker** | Point d'entrée du conteneur |
-| `Dockerfile` | **🐳 Image** | Définition de l'image Docker |
-| `docker-compose.yml` | **📄 Compose** | Exemple Docker Compose |
-| `.github/workflows/docker.yml` | **🤖 CI/CD** | Pipeline automatique |
+```bash
+# Fork le repository
+git clone https://github.com/YOUR_USERNAME/QBittorrent-Error-Monitor.git
 
-### **🔄 Flux de développement**
+# Créer une branche
+git checkout -b feature/nouvelle-fonctionnalite
 
-```mermaid
-graph LR
-    A[Code Push] --> B[GitHub Actions]
-    B --> C[Multi-arch Build]
-    C --> D[GHCR Registry]
-    D --> E[Script install.sh]
-    E --> F[Utilisateur final]
+# Faire vos modifications
+# ...
+
+# Tester
+python qbittorrent-monitor.py --test --dry-run
+
+# Commit et push
+git add .
+git commit -m "Ajout nouvelle fonctionnalité"
+git push origin feature/nouvelle-fonctionnalite
 ```
 
 ## 🔗 **Ressources et liens**
@@ -321,8 +318,8 @@ graph LR
 - 🔧 [qBittorrent WebUI API](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API)
 - 📡 [Sonarr API Documentation](https://sonarr.tv/docs/api/)
 - 🎬 [Radarr API Documentation](https://radarr.video/docs/api/)
-- 🐳 [GitHub Container Registry](https://github.com/kesurof/QBittorrent-Error-Monitor/pkgs/container/qbittorrent-error-monitor%2Fqbittorrent-monitor)
-- 🚀 [GitHub Actions](https://github.com/kesurof/QBittorrent-Error-Monitor/actions)
+- � [Python Requests](https://docs.python-requests.org/)
+- � [PyYAML Documentation](https://pyyaml.org/)
 
 ## 📄 **Licence**
 
@@ -330,4 +327,4 @@ MIT License - Voir le fichier [LICENSE](LICENSE)
 
 ---
 
-**🎯 Solution Docker simple et efficace • 🐳 Image pré-construite • 🤖 CI/CD GitHub Actions • 🔧 Installation en une commande**
+**🎯 Script Python simple et efficace • � Aucune dépendance Docker • 🔧 Configuration flexible**

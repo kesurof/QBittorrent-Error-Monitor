@@ -1,69 +1,46 @@
-# Configuration QBittorrent Monitor
-# Auto-configuration pour environnement Docker
+# Configuration QBittorrent Error Monitor
+qbittorrent:
+  host: "localhost"
+  port: 8080
+  username: "admin"
+  password: "adminadmin"
+  use_https: false
 
-# Configuration générale
-monitor:
-  check_interval: 300  # 5 minutes
-  log_level: "INFO"
-  dry_run: false
-  timezone: "Europe/Paris"
-
-# Configuration Docker
-docker:
-  network: "bridge"  # Réseau par défaut Docker
-  socket_path: "/var/run/docker.sock"
-
-# Configuration des services
-services:
+applications:
   sonarr:
     enabled: true
-    port: 8989
-    api_version: "v3"
-    container_names: 
-      - "sonarr"
-    config_paths:
-      - "/configs/sonarr/config"  # Chemin monté dans le conteneur
-      - "/home/*/seedbox/docker/*/sonarr/config"  # Chemin seedbox pattern
-      - "/data/sonarr/config"  # Chemin docker-compose
-    search_command: "missingEpisodeSearch"
-    
+    url: "http://localhost:8989"
+    api_key: "your_sonarr_api_key"
   radarr:
     enabled: true
-    port: 7878
-    api_version: "v3"
-    container_names:
-      - "radarr"
-    config_paths:
-      - "/configs/radarr/config"  # Chemin monté dans le conteneur
-      - "/home/*/seedbox/docker/*/radarr/config"  # Chemin seedbox pattern  
-      - "/data/radarr/config"  # Chemin docker-compose
-    search_command: "MissingMoviesSearch"
+    url: "http://localhost:7878"
+    api_key: "your_radarr_api_key"
 
-# Patterns d'erreurs qBittorrent à détecter
-error_patterns:
-  - "qBittorrent is reporting an error"
-  - "qBittorrent has returned an error"
-  - "Connection to qBittorrent failed"
-  - "qbittorrent error"
-  - "torrent client error"
-
-# Configuration des logs
-logging:
-  file_path: "/config/logs/qbittorrent-monitor.log"
-  max_size_mb: 50
-  backup_count: 5
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-# Configuration de sécurité
-security:
-  validate_paths: true
-  sanitize_inputs: true
-  max_path_length: 4096
-  allowed_user_chars: "a-zA-Z0-9._-"
-
-# Métriques et monitoring
 monitoring:
-  enable_stats: true
-  stats_interval: 600  # Sauvegarde stats toutes les 10min
-  enable_health_check: true
-  health_check_port: 8080
+  check_interval: 300           # Intervalle en secondes (5 minutes)
+  max_retries: 3
+  
+error_patterns:
+  connection_errors:
+    - "Connection timed out"
+    - "No such host is known"
+    - "Name resolution failed"
+    - "Connection refused"
+  
+  tracker_errors:
+    - "Tracker error"
+    - "Announce failed"
+    - "Unregistered torrent"
+    - "Tracker offline"
+  
+  file_errors:
+    - "No space left on device"
+    - "Permission denied"
+    - "Disk full"
+    - "Input/output error"
+
+logging:
+  level: "INFO"                 # DEBUG|INFO|WARNING|ERROR
+  file: "logs/monitor.log"
+  max_size_mb: 10
+  backup_count: 5

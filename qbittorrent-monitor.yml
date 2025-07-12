@@ -1,7 +1,0 @@
-# Ce fichier est obsolète - utilisez les scripts d'installation simplifiés
-#
-# Installation rapide :
-# curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install.sh | bash
-#
-# Installation Docker Compose :
-# curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install-manual.sh | bash
