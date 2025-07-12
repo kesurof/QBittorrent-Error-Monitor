@@ -1,7 +1,7 @@
 ---
 pgrole: 'qbittorrent-monitor'
 intport: '8080'
-image: 'qbittorrent-error-monitor:latest'
+image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/app/config:rw"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/logs:/app/logs:rw"

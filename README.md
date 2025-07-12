@@ -1,13 +1,23 @@
-# QBittorrent Error Monitor - Guide d'installation ssdv2
+# QBittorrent Error Monitor pour ssdv2
 
-## 📦 Installation dans ssdv2
+🚀 **Monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr pour environnements ssdv2**
 
-### 1. Pré-requis
+## � **Fonctionnalités**
 
-Votre environnement ssdv2 doit être fonctionnel avec :
-- Docker et docker-compose
-- Réseau `traefik_proxy` 
-- Variables `MYUID` et `MYGID` configurées
+- 🔍 **Détection automatique** des erreurs qBittorrent
+- 🗑️ **Suppression intelligente** des téléchargements échoués
+- 🚫 **Blacklist automatique** pour éviter les re-téléchargements
+- 🔄 **Déclenchement de nouvelles recherches** Sonarr/Radarr
+- 🐳 **Compatible ssdv2** avec Docker
+- 📊 **Logs détaillés** et monitoring
+
+## 🐳 **Image Docker**
+
+```yaml
+image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2'
+```
+
+## 📁 **Installation ssdv2**
 
 ### 2. Construction de l'image
 
