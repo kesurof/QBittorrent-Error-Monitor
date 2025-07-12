@@ -1,46 +1,48 @@
-# Configuration QBittorrent Error Monitor
-qbittorrent:
-  host: "localhost"
-  port: 8080
-  username: "admin"
-  password: "adminadmin"
-  use_https: false
-
+# Configuration Arr Monitor - Surveillance Sonarr/Radarr
 applications:
   sonarr:
     enabled: true
     url: "http://localhost:8989"
     api_key: "your_sonarr_api_key"
+    check_downloads: true
+    check_failed: true
+    check_stuck: true
   radarr:
     enabled: true
     url: "http://localhost:7878"
     api_key: "your_radarr_api_key"
+    check_downloads: true
+    check_failed: true
+    check_stuck: true
 
 monitoring:
   check_interval: 300           # Intervalle en secondes (5 minutes)
   max_retries: 3
+  stuck_threshold: 3600         # Téléchargements bloqués > 1h
+  failed_threshold: 24          # Échecs > 24h
   
 error_patterns:
-  connection_errors:
-    - "Connection timed out"
-    - "No such host is known"
-    - "Name resolution failed"
-    - "Connection refused"
+  download_errors:
+    - "failed"
+    - "error"
+    - "timeout"
+    - "connection refused"
+    - "no space"
   
-  tracker_errors:
-    - "Tracker error"
-    - "Announce failed"
-    - "Unregistered torrent"
-    - "Tracker offline"
+  stuck_patterns:
+    - "stalled"
+    - "paused"
+    - "queued"
+    - "downloading"
   
-  file_errors:
-    - "No space left on device"
-    - "Permission denied"
-    - "Disk full"
-    - "Input/output error"
+actions:
+  auto_retry: true              # Relancer automatiquement les échecs
+  retry_delay: 1800             # Délai avant nouvelle tentative (30min)
+  max_retries: 3                # Nombre max de tentatives
+  notify_failures: true        # Notifier les échecs persistants
 
 logging:
   level: "INFO"                 # DEBUG|INFO|WARNING|ERROR
-  file: "logs/monitor.log"
+  file: "logs/arr-monitor.log"
   max_size_mb: 10
   backup_count: 5

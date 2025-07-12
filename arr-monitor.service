@@ -1,0 +1,14 @@
+[Unit]
+Description=Arr Monitor - Surveillance Sonarr/Radarr
+After=network.target
+
+[Service]
+Type=simple
+User=USER_TO_REPLACE
+WorkingDirectory=INSTALL_DIR_TO_REPLACE
+ExecStart=INSTALL_DIR_TO_REPLACE/venv/bin/python INSTALL_DIR_TO_REPLACE/arr-monitor.py --config INSTALL_DIR_TO_REPLACE/config/config.yaml.local
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

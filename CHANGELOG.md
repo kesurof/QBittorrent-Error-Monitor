@@ -1,23 +1,49 @@
-## Simplification complète du projet
+# Changelog - Arr Monitor
 
-### **Objectif**
-Retour à une approche **Docker simple** sans la complexité ssdv2, en gardant seulement l'image Docker de base.
+## [2.0.0] - 2025-07-12
 
-### **Changements majeurs**
+### 🔄 TRANSFORMATION MAJEURE
+- **BREAKING CHANGE** : Projet complètement transformé de "QBittorrent Error Monitor" vers "Arr Monitor"
+- **SUPPRESSION** : Surveillance qBittorrent complètement supprimée
+- **FOCUS** : Concentration exclusive sur Sonarr et Radarr
 
-#### **✅ Nouveau script d'installation simple (`install.sh`)**
-- **Installation en une commande** avec `docker run`
-- **Configuration automatique** des répertoires
-- **Variables d'environnement** simples
-- **Pas de dépendance** docker-compose
+### ✨ Nouvelles fonctionnalités
+- Script Python standalone `arr-monitor.py`
+- Surveillance des APIs Sonarr v3 et Radarr v3
+- Détection automatique des téléchargements en erreur
+- Actions automatiques de relance et suppression
+- Configuration simplifiée via YAML
+- Installation interactive avec `install-arr.sh`
+- Support service systemd
 
-#### **✅ Script Docker Compose simplifié (`install-manual.sh`)**
-- **Suppression** de toutes les références ssdv2
-- **Configuration** simplifiée
-- **Image** `latest` au lieu de `ssdv2`
+### 🗑️ Suppressions
+- Suppression complète de Docker et containers
+- Suppression de qBittorrent API
+- Suppression des fichiers CI/CD GitHub Actions
+- Suppression du support multi-architecture
+- Suppression de LinuxServer.io base
 
-#### **✅ Docker Compose mis à jour**
-- **Image** `ghcr.io/.../qbittorrent-monitor:latest`
+### 🛠️ Technique
+- Migration vers Python standalone
+- Dépendances réduites : requests + PyYAML uniquement
+- Structure de projet simplifiée
+- Configuration locale séparée
+
+### 📖 Documentation
+- Nouveau README complet
+- Guide d'installation simplifié
+- Exemples de configuration Sonarr/Radarr
+- Instructions service systemd
+
+---
+
+## Historique pré-transformation (QBittorrent Error Monitor)
+
+### [1.x.x] - Versions antérieures
+- Surveillance qBittorrent + Sonarr/Radarr
+- Base Docker Alpine avec s6-overlay
+- Support multi-architecture
+- CI/CD GitHub Container Registry
 - **Variables d'environnement** avec valeurs par défaut
 - **Volumes** simplifiés
 - **Suppression** du réseau traefik_proxy

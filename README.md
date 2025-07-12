@@ -1,330 +1,131 @@
-# QBittorrent Error Monitor
+# 🔄 Arr Monitor - Surveillance Sonarr/Radarr
 
-🚀 **Script Python pour monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr**
+## 📝 Description
 
-## 🎯 **Fonctionnalités principales**
+Arr Monitor est un outil de surveillance et de gestion automatique des erreurs pour Sonarr et Radarr. Il surveille les files d'attente, détecte les téléchargements en erreur ou bloqués, et peut automatiquement relancer ou supprimer les éléments problématiques.
 
-### 🔍 **Monitoring intelligent**
-- **Détection automatique** des erreurs qBittorrent en temps réel
-- **Surveillance continue** des logs et états des torrents
-- **Patterns d'erreur configurables** (timeout, DNS, tracker, ratio...)
-- **Connexion directe** aux APIs qBittorrent, Sonarr, Radarr
+## ✨ Fonctionnalités
 
-### 🛠️ **Actions automatiques**
-- **Suppression intelligente** des téléchargements échoués
-- **Blacklist automatique** pour éviter les re-téléchargements
-- **Déclenchement immédiat** de nouvelles recherches Sonarr/Radarr
-- **Notifications** optionnelles (logs détaillés)
+- 📊 **Surveillance des files d'attente** Sonarr et Radarr
+- 🔍 **Détection des erreurs** de téléchargement
+- ⚡ **Actions automatiques** : relance et suppression
+- 🎯 **Détection des téléchargements bloqués**
+- 📱 **Notifications** (webhook, email)
+- 🐍 **Installation simple** en Python standalone
+- 📊 **Logs détaillés** et mode debug
 
-### � **Script Python simple**
-- **Aucune dépendance Docker** requise
-- **Installation simple** avec pip
-- **Configuration YAML** facile
-- **Logs structurés** avec rotation automatique
-
-## 📁 **Installation**
-
-### **🚀 Installation rapide**
+## 🚀 Installation Rapide
 
 ```bash
-# Cloner le repository
-git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
-cd QBittorrent-Error-Monitor
+# Cloner le projet
+git clone https://github.com/kesurof/Arr-Monitor.git
+cd Arr-Monitor
 
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Copier et éditer la configuration
-cp config/config.yaml config/config.yaml.local
-nano config/config.yaml.local
-
-# Lancer le script
-python qbittorrent-monitor.py --config config/config.yaml.local
+# Lancer l'installation interactive
+./install-arr.sh
 ```
 
-### **� Installation avec environnement virtuel (recommandé)**
+## ⚙️ Configuration
+
+Le fichier de configuration `config/config.yaml.local` est créé automatiquement lors de l'installation. Il contient :
+
+### Applications surveillées
+- **Sonarr** : URL, clé API, seuils de surveillance
+- **Radarr** : URL, clé API, seuils de surveillance
+
+### Actions automatiques
+- **Relance automatique** des téléchargements en erreur
+- **Suppression** des téléchargements bloqués trop longtemps
+- **Seuils personnalisables** pour chaque action
+
+### Notifications
+- **Webhooks** pour intégrations externes
+- **Email** pour alertes importantes
+
+## 📋 Utilisation
 
 ```bash
-# Cloner le repository
-git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
-cd QBittorrent-Error-Monitor
+# Démarrer la surveillance
+python arr-monitor.py --config config/config.yaml.local
 
-# Créer un environnement virtuel
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
+# Mode test (une vérification uniquement)
+python arr-monitor.py --test --config config/config.yaml.local
 
-# Installer les dépendances
-pip install -r requirements.txt
+# Mode debug (logs détaillés)
+python arr-monitor.py --debug --config config/config.yaml.local
 
-# Configurer et lancer
-cp config/config.yaml config/config.yaml.local
-python qbittorrent-monitor.py --config config/config.yaml.local
+# Mode simulation (sans actions)
+python arr-monitor.py --dry-run --config config/config.yaml.local
 ```
 
-## ⚙️ **Configuration**
+## 🔧 Service Système
 
-### **Fichier de configuration**
-
-Éditez `config/config.yaml.local` selon vos besoins :
-
-```yaml
-# Configuration QBittorrent Error Monitor
-qbittorrent:
-  host: "localhost"
-  port: 8080
-  username: "admin"
-  password: "adminadmin"
-  use_https: false
-
-applications:
-  sonarr:
-    enabled: true
-    url: "http://localhost:8989"
-    api_key: "your_sonarr_api_key"
-  radarr:
-    enabled: true
-    url: "http://localhost:7878"
-    api_key: "your_radarr_api_key"
-
-monitoring:
-  check_interval: 300           # Intervalle en secondes
-  max_retries: 3
-  
-error_patterns:
-  connection_errors:
-    - "Connection timed out"
-    - "No such host is known"
-    - "Name resolution failed"
-  
-  tracker_errors:
-    - "Tracker error"
-    - "Announce failed"
-    - "Unregistered torrent"
-  
-  file_errors:
-    - "No space left on device"
-    - "Permission denied"
-    - "Disk full"
-
-logging:
-  level: "INFO"                 # DEBUG|INFO|WARNING|ERROR
-  file: "logs/monitor.log"
-  max_size_mb: 10
-  backup_count: 5
-```
-
-### **Variables d'environnement**
-
-Vous pouvez aussi utiliser des variables d'environnement :
+Pour une surveillance continue, installez comme service :
 
 ```bash
-export QB_HOST="localhost"
-export QB_PORT="8080"
-export QB_USERNAME="admin"
-export QB_PASSWORD="adminadmin"
-export SONARR_URL="http://localhost:8989"
-export SONARR_API_KEY="your_key"
-export RADARR_URL="http://localhost:7878"
-export RADARR_API_KEY="your_key"
-export LOG_LEVEL="INFO"
+# Copier le fichier service
+sudo cp arr-monitor.service /etc/systemd/system/
+
+# Éditer les chemins dans le service
+sudo nano /etc/systemd/system/arr-monitor.service
+
+# Activer et démarrer
+sudo systemctl enable arr-monitor
+sudo systemctl start arr-monitor
+sudo systemctl status arr-monitor
 ```
 
-## 🔧 **Utilisation**
+## 📊 Surveillance
 
-### **Lancement du script**
-
-```bash
-# Lancement normal
-python qbittorrent-monitor.py
-
-# Avec configuration personnalisée
-python qbittorrent-monitor.py --config /path/to/config.yaml
-
-# Mode test (un seul cycle)
-python qbittorrent-monitor.py --test
-
-# Mode dry-run (simulation sans actions)
-python qbittorrent-monitor.py --dry-run
-
-# Mode debug
-python qbittorrent-monitor.py --debug
-
-# Aide
-python qbittorrent-monitor.py --help
-```
-
-### **Service système (Linux)**
-
-Créer un service systemd pour lancement automatique :
-
-```bash
-# Créer le fichier service
-sudo nano /etc/systemd/system/qbittorrent-monitor.service
-```
-
-```ini
-[Unit]
-Description=QBittorrent Error Monitor
-After=network.target
-
-[Service]
-Type=simple
-User=your_user
-WorkingDirectory=/path/to/QBittorrent-Error-Monitor
-ExecStart=/path/to/venv/bin/python qbittorrent-monitor.py --config config/config.yaml.local
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-# Activer et démarrer le service
-sudo systemctl enable qbittorrent-monitor
-sudo systemctl start qbittorrent-monitor
-
-# Vérifier le statut
-sudo systemctl status qbittorrent-monitor
-
-# Voir les logs
-sudo journalctl -f -u qbittorrent-monitor
-```
-
-### **Tâche cron**
-
-Pour exécuter périodiquement :
-
-```bash
-# Éditer crontab
-crontab -e
-
-# Ajouter ligne pour exécution toutes les 5 minutes
-*/5 * * * * cd /path/to/QBittorrent-Error-Monitor && /path/to/venv/bin/python qbittorrent-monitor.py --test
-```
-
-## 📊 **Logs et monitoring**
-
-### **Structure des logs**
-
-```bash
-logs/
-├── monitor.log              # Log principal
-├── monitor.log.1            # Rotation automatique
-├── monitor.log.2
-└── ...
-```
-
-### **Commandes utiles**
-
+### Logs
 ```bash
 # Voir les logs en temps réel
-tail -f logs/monitor.log
+tail -f logs/arr-monitor.log
 
-# Chercher les erreurs
-grep "ERROR" logs/monitor.log
-
-# Statistiques
-grep "Torrent supprimé" logs/monitor.log | wc -l
-grep "Recherche déclenchée" logs/monitor.log | wc -l
-
-# Nettoyer les anciens logs
-find logs/ -name "*.log.*" -mtime +30 -delete
+# Voir les logs du service
+sudo journalctl -u arr-monitor -f
 ```
 
-## 🔧 **Dépannage**
+### Métriques surveillées
+- **Files d'attente** : éléments en cours
+- **Erreurs** : téléchargements échoués
+- **Bloqués** : éléments sans progression
+- **Historique** : téléchargements récents
 
-### **Problèmes courants**
+## 🛠️ Dépendances
 
-#### **1. Erreur de connexion qBittorrent**
-```bash
-# Vérifier la connexion
-curl -u admin:adminadmin http://localhost:8080/api/v2/app/version
+- Python 3.6+
+- requests >= 2.28.0
+- PyYAML >= 6.0
 
-# Tester avec le script
-python qbittorrent-monitor.py --test --debug
-```
-
-#### **2. APIs Sonarr/Radarr non accessibles**
-```bash
-# Vérifier les URLs et clés API
-curl -H "X-Api-Key: YOUR_KEY" http://localhost:8989/api/v3/system/status
-curl -H "X-Api-Key: YOUR_KEY" http://localhost:7878/api/v3/system/status
-```
-
-#### **3. Permissions de fichiers**
-```bash
-# Corriger les permissions
-chmod +x qbittorrent-monitor.py
-chmod 644 config/config.yaml.local
-mkdir -p logs && chmod 755 logs
-```
-
-#### **4. Dépendances manquantes**
-```bash
-# Réinstaller les dépendances
-pip install --force-reinstall -r requirements.txt
-
-# Vérifier l'installation
-python -c "import requests, yaml; print('OK')"
-```
-
-## 🛠️ **Développement**
-
-### **Structure du projet**
+## 📁 Structure du Projet
 
 ```
-QBittorrent-Error-Monitor/
-├── qbittorrent-monitor.py   # Script principal
+arr-monitor/
+├── arr-monitor.py          # Script principal
 ├── config/
-│   └── config.yaml          # Configuration par défaut
-├── logs/                    # Logs (créé automatiquement)
-├── requirements.txt         # Dépendances Python
-└── README.md               # Documentation
+│   ├── config.yaml         # Configuration par défaut
+│   └── config.yaml.local   # Configuration locale
+├── logs/                   # Fichiers de logs
+├── install-arr.sh         # Script d'installation
+├── arr-monitor.service    # Fichier service systemd
+├── requirements.txt       # Dépendances Python
+└── README_ARR.md         # Documentation
 ```
 
-### **Dépendances Python**
+## 🔗 APIs Utilisées
 
-```python
-requests>=2.28.0
-PyYAML>=6.0
-```
+- **Sonarr API v3** : `/api/v3/queue`, `/api/v3/history`, `/api/v3/command`
+- **Radarr API v3** : `/api/v3/queue`, `/api/v3/history`, `/api/v3/command`
 
-### **Contribution**
+## 📝 Licence
 
-```bash
-# Fork le repository
-git clone https://github.com/YOUR_USERNAME/QBittorrent-Error-Monitor.git
+MIT License - Voir le fichier LICENSE
 
-# Créer une branche
-git checkout -b feature/nouvelle-fonctionnalite
+## 🤝 Contribution
 
-# Faire vos modifications
-# ...
-
-# Tester
-python qbittorrent-monitor.py --test --dry-run
-
-# Commit et push
-git add .
-git commit -m "Ajout nouvelle fonctionnalité"
-git push origin feature/nouvelle-fonctionnalite
-```
-
-## 🔗 **Ressources et liens**
-
-- 🔧 [qBittorrent WebUI API](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API)
-- 📡 [Sonarr API Documentation](https://sonarr.tv/docs/api/)
-- 🎬 [Radarr API Documentation](https://radarr.video/docs/api/)
-- � [Python Requests](https://docs.python-requests.org/)
-- � [PyYAML Documentation](https://pyyaml.org/)
-
-## 📄 **Licence**
-
-MIT License - Voir le fichier [LICENSE](LICENSE)
+Les contributions sont les bienvenues ! Ouvrez une issue ou une pull request.
 
 ---
 
-**🎯 Script Python simple et efficace • � Aucune dépendance Docker • 🔧 Configuration flexible**
+**Note** : Ce projet était auparavant "QBittorrent Error Monitor" et a été transformé pour se concentrer exclusivement sur la surveillance Sonarr/Radarr.
