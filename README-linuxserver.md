@@ -88,9 +88,9 @@ $ id dockeruser
 uid=1000(dockeruser) gid=1000(dockergroup) groups=1000(dockergroup)
 ```
 
-## Compatibility ssdv2
+## Compatibility
 
-Cette image est entièrement compatible avec l'écosystème ssdv2. Utilisez le fichier `qbittorrent-monitor.yml` fourni pour l'intégration Ansible.
+Cette image est compatible avec Docker et Docker Compose. Utilisez les scripts d'installation fournis pour une configuration rapide.
 
 ## Support Info
 

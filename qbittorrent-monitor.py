@@ -469,7 +469,7 @@ class QBittorrentErrorMonitor:
             self.session.close()
 
 def main():
-    parser = argparse.ArgumentParser(description='QBittorrent Error Monitor pour ssdv2')
+    parser = argparse.ArgumentParser(description='QBittorrent Error Monitor')
     parser.add_argument('--config', '-c', default='/config/config.yaml',
                        help='Fichier de configuration YAML')
     parser.add_argument('--interval', '-i', type=int,

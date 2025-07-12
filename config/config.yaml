@@ -1,4 +1,4 @@
-# Configuration QBittorrent Monitor pour ssdv2
+# Configuration QBittorrent Monitor
 # Auto-configuration pour environnement Docker
 
 # Configuration générale
@@ -10,7 +10,7 @@ monitor:
 
 # Configuration Docker
 docker:
-  network: "traefik_proxy"  # Réseau par défaut ssdv2
+  network: "bridge"  # Réseau par défaut Docker
   socket_path: "/var/run/docker.sock"
 
 # Configuration des services
