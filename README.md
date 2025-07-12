@@ -1,6 +1,6 @@
-# QBittorrent Error Monitor pour ssdv2
+# QBittorrent Error Monitor
 
-🚀 **Monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr pour environnements ssdv2**
+🚀 **Monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr**
 
 [![GitHub Actions](https://github.com/kesurof/QBittorrent-Error-Monitor/actions/workflows/docker.yml/badge.svg)](https://github.com/kesurof/QBittorrent-Error-Monitor/actions)
 [![GitHub Container Registry](https://ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor)](https://github.com/kesurof/QBittorrent-Error-Monitor/pkgs/container/qbittorrent-error-monitor%2Fqbittorrent-monitor)
@@ -19,12 +19,12 @@
 - **Déclenchement immédiat** de nouvelles recherches Sonarr/Radarr
 - **Notifications** optionnelles (logs détaillés)
 
-### 🐳 **Intégration ssdv2**
-- **Compatible natif** avec l'environnement ssdv2
+### 🐳 **Intégration Docker**
+- **Image pré-construite** sur GitHub Container Registry
 - **Auto-configuration** complète au démarrage
-- **Respect des permissions** PUID/PGID
-- **Réseau traefik_proxy** intégré
+- **Permissions** PUID/PGID configurables
 - **Health check** intégré (port 8080)
+- **Multi-architecture** : AMD64, ARM64, ARM v7
 
 ### 📊 **Monitoring et debug**
 - **Logs structurés** avec niveaux configurables
@@ -37,27 +37,50 @@
 ```yaml
 # Image automatiquement construite et publiée via GitHub Actions
 # Multi-architecture : AMD64, ARM64, ARM v7
-image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2'
+image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest'
 ```
 
 > 💡 **Aucune construction locale nécessaire !** L'image est automatiquement disponible sur GitHub Container Registry.
 
-## 📁 **Installation ssdv2**
+## 📁 **Installation**
 
-### **🚀 Application autonome - Compatible ssdv2**
-
-**L'application est autonome et s'auto-configure.** ssdv2 s'occupe du déploiement.
-
-**Étape unique : Copier le fichier d'exemple**
+### **🚀 Installation rapide (recommandée)**
 
 ```bash
-# Télécharger le fichier d'exemple
-wget -O qbittorrent-monitor.yml https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/qbittorrent-monitor.yml
+# Installation en une commande
+curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install.sh | bash
 ```
 
-**Puis l'intégrer dans votre configuration ssdv2 habituelle.**
+### **🔧 Installation Docker Compose**
 
-> ✅ **C'est tout !** L'application détecte automatiquement les conteneurs qBittorrent, Sonarr, Radarr et s'auto-configure.
+```bash
+# Installation avec Docker Compose
+curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install-manual.sh | bash
+```
+
+### **⚙️ Installation manuelle**
+
+```bash
+# Créer les répertoires
+mkdir -p ~/qbittorrent-monitor/{config,logs}
+
+# Télécharger la configuration
+curl -sSL -o ~/qbittorrent-monitor/config/config.yaml \
+    https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/config/config.yaml
+
+# Démarrer le conteneur
+docker run -d \
+  --name qbittorrent-monitor \
+  --restart unless-stopped \
+  -e PUID=$(id -u) \
+  -e PGID=$(id -g) \
+  -e TZ=Europe/Paris \
+  -v ~/qbittorrent-monitor/config:/app/config:rw \
+  -v ~/qbittorrent-monitor/logs:/app/logs:rw \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -p 8080:8080 \
+  ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest
+```
 
 ## 🔄 **Flux simplifié**
 
@@ -65,32 +88,31 @@ wget -O qbittorrent-monitor.yml https://raw.githubusercontent.com/kesurof/QBitto
 graph LR
     A[Push Code] --> B[GitHub Actions]
     B --> C[Image GHCR]
-    C --> D[Fichier .yml]
-    D --> E[ssdv2 s'occupe du reste]
+    C --> D[Script install.sh]
+    D --> E[Conteneur démarré]
 ```
 
 1. **Push code** → GitHub Actions build l'image
 2. **Image disponible** sur GHCR  
-3. **Utilisateur** télécharge le fichier `.yml` d'exemple
-4. **ssdv2** déploie selon sa configuration
+3. **Utilisateur** exécute le script d'installation
+4. **Conteneur** démarré automatiquement
 5. **Application** s'auto-configure au démarrage
 
-## ⚙️ **Configuration avancée**
+## ⚙️ **Configuration**
 
-### **Variables d'environnement ssdv2**
+### **Variables d'environnement**
 
-```yaml
-environment:
-  # Variables ssdv2 standards
-  - PUID=${PUID}                    # ID utilisateur
-  - PGID=${PGID}                    # ID groupe  
-  - TZ=${TZ}                        # Fuseau horaire
-  
-  # Configuration application
-  - CHECK_INTERVAL=300              # Intervalle vérification (sec)
-  - LOG_LEVEL=INFO                  # DEBUG|INFO|WARNING|ERROR
-  - DRY_RUN=false                   # Mode simulation
-  - DOCKER_NETWORK=traefik_proxy    # Réseau Docker
+```bash
+# Variables principales
+PUID=1000                    # ID utilisateur
+PGID=1000                    # ID groupe  
+TZ=Europe/Paris              # Fuseau horaire
+
+# Configuration application
+CHECK_INTERVAL=300           # Intervalle vérification (sec)
+LOG_LEVEL=INFO              # DEBUG|INFO|WARNING|ERROR
+DRY_RUN=false               # Mode simulation
+HTTP_PORT=8080              # Port health check
 ```
 
 ### **Personnalisation des patterns d'erreur**
@@ -114,14 +136,13 @@ error_patterns:
     - "Disk full"
 ```
 
-## 📂 **Structure des fichiers (auto-créée)**
+## 📂 **Structure des fichiers**
 
 ```bash
-# ssdv2 crée automatiquement
-${USERDIR}/docker/qbittorrent-monitor/
+# Structure automatiquement créée
+~/qbittorrent-monitor/
 ├── config/
-│   ├── config.yaml              # Configuration auto-générée
-│   └── discovered_services.json # Services détectés
+│   └── config.yaml              # Configuration principal
 └── logs/
     └── qbittorrent-monitor.log  # Logs application
 ```
@@ -135,10 +156,10 @@ ${USERDIR}/docker/qbittorrent-monitor/
 docker logs -f qbittorrent-monitor
 
 # Logs de l'application
-tail -f /settings/storage/docker/USER/qbittorrent-monitor/logs/qbittorrent-monitor.log
+tail -f ~/qbittorrent-monitor/logs/qbittorrent-monitor.log
 
-# Status détaillé
-docker inspect qbittorrent-monitor | grep -A 10 "Health"
+# Status du conteneur
+docker ps | grep qbittorrent-monitor
 ```
 
 ### **Tests et debug**
@@ -160,8 +181,11 @@ docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --dry-run --
 # Redémarrage
 docker restart qbittorrent-monitor
 
-# Reconfiguration
-docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --config /app/config/config.yaml
+# Arrêt
+docker stop qbittorrent-monitor
+
+# Suppression
+docker rm qbittorrent-monitor
 
 # Vérification health check
 curl -f http://localhost:8080/health || echo "Service KO"
@@ -173,22 +197,23 @@ curl -f http://localhost:8080/health || echo "Service KO"
 - **GitHub Actions** : Build automatique multi-architecture à chaque push
 - **GitHub Container Registry** : Stockage et distribution des images
 - **Multi-arch** : Support AMD64, ARM64, ARM v7
-- **Tags** : `latest`, `ssdv2`, version git SHA
+- **Tags** : `latest`, version git SHA
 
 ### **🛠️ Scripts et fichiers**
 
 | Fichier | Usage | Description |
 |---------|-------|-------------|
-| `qbittorrent-monitor.yml` | **Exemple ssdv2** | Fichier de configuration d'exemple |
-| `deploy-ghcr.sh` | **Plan B** | Build manuel si GitHub Actions indisponible |
-| `.github/workflows/docker.yml` | **CI/CD** | Pipeline automatique |
+| `install.sh` | **✅ RECOMMANDÉ** | Installation rapide avec Docker |
+| `install-manual.sh` | **🔧 Docker Compose** | Installation avec docker-compose |
+| `docker-compose.yml` | **📄 Compose** | Fichier compose pour installation manuelle |
+| `deploy-ghcr.sh` | **🔧 Développement** | Build manuel si GitHub Actions indisponible |
+| `.github/workflows/docker.yml` | **🤖 CI/CD** | Pipeline automatique |
 
-> 💡 **Principe** : Application autonome + Fichier d'exemple → ssdv2 fait le reste
+> **💡 Principe** : Image Docker pré-construite → Script d'installation → Auto-configuration
 
 ## 🔗 **Ressources et liens**
 
-- 📚 [Documentation ssdv2](https://github.com/saltyorg/Saltbox)
-- 🔧 [qBittorrent WebUI API](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API)
+-  [qBittorrent WebUI API](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API)
 - 📡 [Sonarr API Documentation](https://sonarr.tv/docs/api/)
 - 🎬 [Radarr API Documentation](https://radarr.video/docs/api/)
 - 🐳 [GitHub Container Registry](https://github.com/kesurof/QBittorrent-Error-Monitor/pkgs/container/qbittorrent-error-monitor%2Fqbittorrent-monitor)
@@ -199,4 +224,4 @@ MIT License - Voir le fichier [LICENSE](LICENSE)
 
 ---
 
-**🎯 Spécialement optimisé pour ssdv2 • 🐳 Docker natif • 🤖 CI/CD GitHub Actions**
+**🎯 Solution Docker simple et efficace • 🐳 Image pré-construite • 🤖 CI/CD GitHub Actions**

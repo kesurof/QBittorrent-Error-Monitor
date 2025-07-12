@@ -64,3 +64,8 @@ test_output/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Scripts obsolètes ou temporaires
+install-temp.sh
+*-deprecated.*
+*-obsolete.*

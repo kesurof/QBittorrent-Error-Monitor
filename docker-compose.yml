@@ -2,33 +2,28 @@ version: '3.8'
 
 services:
   qbittorrent-monitor:
-    image: ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2
+    image: ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest
     container_name: qbittorrent-monitor
     restart: unless-stopped
     
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - CHECK_INTERVAL=300
-      - LOG_LEVEL=INFO
-      - DRY_RUN=false
-      - DOCKER_NETWORK=traefik_proxy
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Paris}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-300}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DRY_RUN=${DRY_RUN:-false}
     
     volumes:
-      - ${USERDIR}/docker/qbittorrent-monitor/config:/app/config:rw
-      - ${USERDIR}/docker/qbittorrent-monitor/logs:/app/logs:rw
-      - ${USERDIR}:${USERDIR}
+      - ${USERDIR:-./data}/qbittorrent-monitor/config:/app/config:rw
+      - ${USERDIR:-./data}/qbittorrent-monitor/logs:/app/logs:rw
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Montage des configurations pour récupération des API keys
-      - ${USERDIR}/docker:/configs:ro
+      - ${USERDIR:-./data}:/configs:ro
     
     ports:
-      - "8080:8080"  # Port health check (optionnel)
-    
-    networks:
-      - traefik_proxy
+      - "${HTTP_PORT:-8080}:8080"  # Port health check
     
     security_opt:
       - no-new-privileges:true
@@ -40,12 +35,8 @@ services:
           cpus: '0.25'
     
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "python3", "/app/qbittorrent-monitor.py", "--health-check"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-networks:
-  traefik_proxy:
-    external: true

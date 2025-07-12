@@ -1,7 +1,7 @@
 ---
 pgrole: 'qbittorrent-monitor'
 intport: '8080'
-image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2'
+image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config:rw"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/logs:/app/logs:rw"
@@ -30,9 +30,9 @@ specific_docker_info:
   # Ressources limitées
   mem_limit: 128m
   cpus: 0.25
-  # Health check
+  # Health check intégré
   healthcheck:
-    test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+    test: ["CMD-SHELL", "python3 /app/qbittorrent-monitor.py --health-check || exit 1"]
     interval: 30s
     timeout: 10s
     retries: 3

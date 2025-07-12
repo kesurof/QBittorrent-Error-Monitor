@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Script d'installation QBittorrent Monitor pour ssdv2
-# Usage: curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install-ssdv2.sh | bash
+# Script d'installation QBittorrent Monitor (Docker)
+# Usage: curl -sSL https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/install-manual.sh | bash
 
 set -euo pipefail
 
@@ -21,15 +21,15 @@ show_banner() {
     echo -e "${BLUE}"
     cat << 'EOF'
 ╔══════════════════════════════════════════════════════════════════╗
-║            QBittorrent Monitor - Installation ssdv2             ║
-║                   Image GHCR pré-construite                     ║
+║            QBittorrent Monitor - Installation Docker            ║
+║                       Image GHCR                                ║
 ╚══════════════════════════════════════════════════════════════════╝
 EOF
     echo -e "${NC}"
 }
 
 check_requirements() {
-    log_step "Vérification des prérequis ssdv2"
+    log_step "Vérification des prérequis"
     
     # Vérifier Docker
     if ! command -v docker &> /dev/null; then
@@ -43,33 +43,25 @@ check_requirements() {
         exit 1
     fi
     
-    # Vérifier les variables d'environnement ssdv2
+    # Variables d'environnement par défaut
     if [[ -z "${USERDIR:-}" ]]; then
-        log_warn "Variable USERDIR non définie, utilisation de \$HOME/docker"
         export USERDIR="$HOME/docker"
+        log_info "Utilisation du répertoire: $USERDIR"
     fi
     
     if [[ -z "${PUID:-}" ]]; then
         export PUID=$(id -u)
-        log_warn "Variable PUID non définie, utilisation de $PUID"
     fi
     
     if [[ -z "${PGID:-}" ]]; then
         export PGID=$(id -g)
-        log_warn "Variable PGID non définie, utilisation de $PGID"
     fi
     
     if [[ -z "${TZ:-}" ]]; then
         export TZ="Europe/Paris"
-        log_warn "Variable TZ non définie, utilisation de $TZ"
     fi
     
-    # Vérifier le réseau traefik_proxy
-    if ! docker network ls | grep -q "traefik_proxy"; then
-        log_error "Réseau traefik_proxy non trouvé. Votre stack ssdv2 est-elle démarrée ?"
-        exit 1
-    fi
-    
+    log_info "Configuration: PUID=$PUID, PGID=$PGID, TZ=$TZ"
     log_info "Prérequis validés"
 }
 
@@ -107,8 +99,8 @@ deploy_service() {
     fi
     
     # Télécharger l'image
-    log_step "Téléchargement de l'image GHCR"
-    docker pull ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2
+    log_step "Téléchargement de l'image depuis GitHub Container Registry"
+    docker pull ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest
     
     # Démarrer le service
     log_step "Démarrage du service"
@@ -130,6 +122,7 @@ show_results() {
     log_info "🎉 QBittorrent Monitor installé avec succès !"
     echo ""
     echo "📊 Commandes utiles :"
+    echo "   cd $USERDIR/qbittorrent-monitor"
     echo "   docker-compose logs -f qbittorrent-monitor"
     echo "   docker-compose restart qbittorrent-monitor"
     echo "   docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --health-check"
