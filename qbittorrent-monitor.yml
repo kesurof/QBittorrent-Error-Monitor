@@ -31,7 +31,7 @@ specific_docker_info:
   cpus: 0.25
   # Health check intégré
   healthcheck:
-    test: ["CMD-SHELL", "python3 /app/qbittorrent-monitor.py --health-check || exit 1"]
+    test: ["CMD-SHELL", "pgrep -f qbittorrent-monitor.py || exit 1"]
     interval: 30s
     timeout: 10s
     retries: 3

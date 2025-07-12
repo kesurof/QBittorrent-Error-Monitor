@@ -470,7 +470,7 @@ class QBittorrentErrorMonitor:
 
 def main():
     parser = argparse.ArgumentParser(description='QBittorrent Error Monitor pour ssdv2')
-    parser.add_argument('--config', '-c', default='/app/config/config.yaml',
+    parser.add_argument('--config', '-c', default='/config/config.yaml',
                        help='Fichier de configuration YAML')
     parser.add_argument('--interval', '-i', type=int,
                        help='Intervalle de vérification en secondes')
@@ -492,7 +492,7 @@ def main():
             if not os.path.exists('/config/logs'):
                 print("❌ Répertoire logs manquant")
                 sys.exit(1)
-            if not os.path.exists('/app/config'):
+            if not os.path.exists('/config'):
                 print("❌ Répertoire config manquant")
                 sys.exit(1)
             print("✅ Health check OK")

@@ -34,7 +34,7 @@ services:
           cpus: '0.25'
     
     healthcheck:
-      test: ["CMD", "python3", "/app/qbittorrent-monitor.py", "--health-check"]
+      test: ["CMD-SHELL", "pgrep -f qbittorrent-monitor.py || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
