@@ -1,10 +1,4 @@
-#!/usr/bin/with-contenv bash
-# shellcheck shell=bash
+#!/command/with-contenv bash
 
-cd /app || exit 1
-
-echo "**** Starting QBittorrent Error Monitor ****"
-
-exec \
-    s6-setuidgid abc \
-    python3 /app/qbittorrent-monitor.py --config /config/config.yaml
+cd /app
+exec s6-setuidgid abc python3 /app/qbittorrent-monitor.py
