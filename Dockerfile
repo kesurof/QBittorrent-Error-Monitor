@@ -21,22 +21,31 @@ RUN apk add --no-cache \
     bash \
     tzdata \
     shadow \
+    gosu \
     && rm -rf /var/cache/apk/*
 
-# Script d'entrée pour gérer les UID/GID dynamiques (compatible ssdv2)
-RUN echo '#!/bin/bash' > /entrypoint.sh && \
-    echo 'groupmod -o -g "$PGID" abc' >> /entrypoint.sh && \
-    echo 'usermod -o -u "$PUID" abc' >> /entrypoint.sh && \
-    echo 'chown -R abc:abc /app/logs' >> /entrypoint.sh && \
-    echo 'exec gosu abc "$@"' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
-
-# Installation de gosu pour la gestion des permissions
-RUN apk add --no-cache gosu
-
-# Création de l'utilisateur par défaut (sera modifié par l'entrypoint)
+# Création de l'utilisateur par défaut
 RUN addgroup -g 1000 abc && \
     adduser -u 1000 -G abc -D -s /bin/bash abc
+
+# Script d'entrée simplifié
+COPY --chmod=755 <<EOF /entrypoint.sh
+#!/bin/bash
+set -e
+
+# Ajustement dynamique des UID/GID pour compatibilité ssdv2
+if [ "\$PUID" != "1000" ] || [ "\$PGID" != "1000" ]; then
+    echo "Adjusting UID/GID to \$PUID:\$PGID"
+    groupmod -o -g "\$PGID" abc 2>/dev/null || true
+    usermod -o -u "\$PUID" abc 2>/dev/null || true
+fi
+
+# Assurer les permissions sur les répertoires
+chown -R abc:abc /app/logs /app/config 2>/dev/null || true
+
+# Exécuter en tant qu'utilisateur abc
+exec gosu abc "\$@"
+EOF
 
 # Répertoires de travail
 WORKDIR /app

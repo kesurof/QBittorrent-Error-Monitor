@@ -3,73 +3,46 @@
 # Git
 .git/
 .gitignore
-.gitattributes
 
 # Documentation
 README*.md
-INSTALL*.md
-CHANGELOG.md
 docs/
 
-# Scripts de développement et déploiement
-setup.sh
-install.sh
-test-suite.sh
+# Scripts de développement
 publish-docker.sh
-deploy*.sh
-validate*.sh
 
-# Tests
-test_output/
-.pytest_cache/
-.coverage
-
-# Logs et données temporaires
+# Tests et données temporaires
 logs/
 *.log
-*.log.*
-stats.json
-qbittorrent-stats.json
 temp/
 tmp/
 .cache/
 
-# Configuration locale
-.env
-.env.local
+# Configuration locale et overrides
+.env*
 docker-compose.override.yml
 
 # IDE et éditeurs
 .vscode/
 .idea/
 *.swp
-*.swo
 *~
 
 # OS
 .DS_Store
 Thumbs.db
-.directory
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
-.Python
-*.so
-.tox/
+.pytest_cache/
 venv/
 env/
 
-# Docker
-Dockerfile.dev
-docker-compose.dev.yml
-
-# Backup et temporaires
+# Backup
 *.backup
 *.bak
-*.old
 
 # Configuration locale (sera montée en volume)
 config/local.yaml

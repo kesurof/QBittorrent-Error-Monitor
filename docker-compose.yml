@@ -1,6 +1,6 @@
 version: '3.8'
 
-# Docker Compose d'exemple pour test local
+# Docker Compose pour test local
 # Pour ssdv2, utilisez le fichier qbittorrent-monitor.yml
 
 services:
@@ -9,61 +9,25 @@ services:
     container_name: qbittorrent-error-monitor
     restart: unless-stopped
     
-    # Variables d'environnement (compatible ssdv2)
     environment:
-      - PUID=${MYUID:-1000}
-      - PGID=${MYGID:-1000}
-      - CHECK_INTERVAL=300
-      - LOG_LEVEL=INFO
-      - DRY_RUN=false
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
       - TZ=Europe/Paris
     
-    # Volumes (adaptez les chemins selon votre environnement)
     volumes:
-      # Logs persistants
       - ./logs:/app/logs
-      
-      # Configuration
       - ./config:/app/config:ro
-      
-      # Socket Docker (lecture seule)
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      
-      # Configurations Sonarr/Radarr (adaptez selon votre setup)
-      - ${HOME}/.config:/configs:ro
-      # OU pour ssdv2 :
-      # - /settings/storage/docker/${USER}:/configs:ro
-      
-      # Timezone
       - /etc/localtime:/etc/localtime:ro
+      # Adaptez ce chemin selon votre environnement
+      - ${HOME}/.config:/configs:ro
     
-    # Réseau (utilisez votre réseau existant)
     networks:
-      - traefik_proxy
+      - default
     
-    # Limites de ressources
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.25'
-    
-    # Health check
-    healthcheck:
-      test: ["CMD", "python3", "/app/qbittorrent-monitor.py", "--health-check"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    
-    # Labels
-    labels:
-      - "com.qbittorrent-monitor.version=2.0"
-      - "com.qbittorrent-monitor.environment=docker"
+    mem_limit: 128m
+    cpus: 0.25
 
-# Réseau (créez-le ou utilisez external: true si existant)
 networks:
-  traefik_proxy:
-    external: true
-    # Ou si le réseau n'existe pas :
-    # driver: bridge
+  default:
+    driver: bridge
