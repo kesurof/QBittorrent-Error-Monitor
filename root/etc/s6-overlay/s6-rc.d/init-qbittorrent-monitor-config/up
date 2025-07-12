@@ -14,4 +14,4 @@ fi
 mkdir -p /config/logs
 
 # S'assurer que les permissions sont correctes
-lsiown abc:abc /config
+chown abc:abc /config
