@@ -51,7 +51,7 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
         labels: |
           org.opencontainers.image.title=QBittorrent Error Monitor
-          org.opencontainers.image.description=Monitor automatique des erreurs qBittorrent avec intégration Sonarr/Radarr
+          org.opencontainers.image.description=LinuxServer.io compatible QBittorrent error monitor with Sonarr/Radarr integration
           org.opencontainers.image.vendor=kesurof
           org.opencontainers.image.licenses=MIT
     
@@ -63,6 +63,9 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+          VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     

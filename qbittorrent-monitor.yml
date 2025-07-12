@@ -3,8 +3,7 @@ pgrole: 'qbittorrent-monitor'
 intport: '8080'
 image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config:rw"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/logs:/app/logs:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
   - '/var/run/docker.sock:/var/run/docker.sock:ro'

@@ -16,7 +16,7 @@ import yaml
 from pathlib import Path
 
 class QBittorrentErrorMonitor:
-    def __init__(self, config_file='/app/config/config.yaml'):
+    def __init__(self, config_file='/config/config.yaml'):
         self.config_file = config_file
         self.config = self.load_config()
         self.running = True
@@ -96,7 +96,7 @@ class QBittorrentErrorMonitor:
                 "torrent client error"
             ],
             'logging': {
-                'file_path': '/app/logs/qbittorrent-monitor.log',
+                'file_path': '/config/logs/qbittorrent-monitor.log',
                 'max_size_mb': 50,
                 'backup_count': 5
             }
@@ -128,7 +128,7 @@ class QBittorrentErrorMonitor:
         log_level = self.config.get('monitor', {}).get('log_level', 'INFO')
         
         # Créer le répertoire de logs
-        log_file = log_config.get('file_path', '/app/logs/qbittorrent-monitor.log')
+        log_file = log_config.get('file_path', '/config/logs/qbittorrent-monitor.log')
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
         
         # Configuration du logger
@@ -448,7 +448,7 @@ class QBittorrentErrorMonitor:
                 
                 # Sauvegarder les stats
                 try:
-                    stats_file = '/app/logs/qbittorrent-stats.json'
+                    stats_file = '/config/logs/qbittorrent-stats.json'
                     with open(stats_file, 'w') as f:
                         json.dump(self.stats, f, indent=2)
                 except Exception as e:
@@ -489,7 +489,7 @@ def main():
     if args.health_check:
         try:
             # Vérifier que les répertoires existent
-            if not os.path.exists('/app/logs'):
+            if not os.path.exists('/config/logs'):
                 print("❌ Répertoire logs manquant")
                 sys.exit(1)
             if not os.path.exists('/app/config'):
@@ -519,7 +519,7 @@ def main():
         monitor.run_cycle()
         # Sauvegarder les stats
         try:
-            stats_file = '/app/logs/qbittorrent-stats.json'
+            stats_file = '/config/logs/qbittorrent-stats.json'
             with open(stats_file, 'w') as f:
                 json.dump(monitor.stats, f, indent=2)
             monitor.logger.info(f"📊 Statistiques sauvegardées: {stats_file}")
