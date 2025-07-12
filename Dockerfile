@@ -1,7 +1,7 @@
 # QBittorrent Error Monitor
 # Image Docker compatible ssdv2
 
-FROM python:3.11-alpine
+FROM python:3.13-alpine
 
 # Métadonnées
 LABEL maintainer="QBittorrent Error Monitor"
