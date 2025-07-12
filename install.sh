@@ -123,19 +123,125 @@ echo "✅ Chemin sélectionné : $CONFIGS_PATH"
 # Configuration des répertoires
 INSTALL_DIR="${HOME}/qbittorrent-monitor"
 echo "📁 Création des répertoires dans : $INSTALL_DIR"
-mkdir -p "$INSTALL_DIR/config" "$INSTALL_DIR/logs"
+
+# Créer les répertoires avec les bonnes permissions
+if ! mkdir -p "$INSTALL_DIR/config" "$INSTALL_DIR/logs" 2>/dev/null; then
+    echo "❌ Impossible de créer les répertoires dans $INSTALL_DIR"
+    echo "🔧 Tentative avec sudo..."
+    sudo mkdir -p "$INSTALL_DIR/config" "$INSTALL_DIR/logs"
+    sudo chown -R $(whoami):$(whoami) "$INSTALL_DIR"
+fi
+
+# Vérifier que les répertoires sont accessibles en écriture
+if [ ! -w "$INSTALL_DIR/config" ]; then
+    echo "🔧 Correction des permissions..."
+    sudo chown -R $(whoami):$(whoami) "$INSTALL_DIR"
+fi
 
 # Téléchargement de la configuration
 echo "📄 Téléchargement de la configuration..."
-curl -sSL -o "$INSTALL_DIR/config/config.yaml" \
-    "https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/config/config.yaml"
+if ! curl -sSL -o "$INSTALL_DIR/config/config.yaml" \
+    "https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/config/config.yaml"; then
+    echo "❌ Erreur lors du téléchargement de la configuration"
+    echo "🔧 Tentative de création manuelle..."
+    
+    # Créer une configuration de base si le téléchargement échoue
+    cat > "$INSTALL_DIR/config/config.yaml" << 'EOF'
+# Configuration QBittorrent Error Monitor
+qbittorrent:
+  host: "localhost"
+  port: 8080
+  username: "admin"
+  password: "adminadmin"
+
+docker:
+  network: "bridge"
+
+applications:
+  sonarr:
+    enabled: true
+    config_path: "/configs/sonarr/config"
+    docker_name: "sonarr"
+  radarr:
+    enabled: true
+    config_path: "/configs/radarr/config"
+    docker_name: "radarr"
+
+monitoring:
+  check_interval: 300
+  max_retries: 3
+  
+logging:
+  level: "INFO"
+  file: "/config/logs/monitor.log"
+EOF
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ Configuration de base créée"
+    else
+        echo "❌ Impossible de créer la configuration. Vérifiez les permissions."
+        exit 1
+    fi
+fi
 
 # Mise à jour de la configuration avec le réseau et les chemins choisis
 echo "🔧 Configuration du réseau et des chemins..."
-sed -i.bak "s|network: \"bridge\"|network: \"$DOCKER_NETWORK\"|" "$INSTALL_DIR/config/config.yaml"
-sed -i.bak2 "s|/configs/sonarr/config|$CONFIGS_PATH/sonarr/config|" "$INSTALL_DIR/config/config.yaml"
-sed -i.bak3 "s|/configs/radarr/config|$CONFIGS_PATH/radarr/config|" "$INSTALL_DIR/config/config.yaml"
-rm -f "$INSTALL_DIR/config/config.yaml.bak"*
+
+# Vérifier que le fichier config existe
+if [ ! -f "$INSTALL_DIR/config/config.yaml" ]; then
+    echo "❌ Fichier de configuration manquant"
+    exit 1
+fi
+
+# Sauvegarder la configuration originale
+cp "$INSTALL_DIR/config/config.yaml" "$INSTALL_DIR/config/config.yaml.backup"
+
+# Mettre à jour la configuration
+if sed -i.bak "s|network: \"bridge\"|network: \"$DOCKER_NETWORK\"|" "$INSTALL_DIR/config/config.yaml" && \
+   sed -i.bak2 "s|/configs/sonarr/config|$CONFIGS_PATH/sonarr/config|" "$INSTALL_DIR/config/config.yaml" && \
+   sed -i.bak3 "s|/configs/radarr/config|$CONFIGS_PATH/radarr/config|" "$INSTALL_DIR/config/config.yaml"; then
+    
+    echo "✅ Configuration mise à jour"
+    rm -f "$INSTALL_DIR/config/config.yaml.bak"*
+else
+    echo "⚠️  Erreur lors de la mise à jour de la configuration"
+    echo "🔧 Restauration de la sauvegarde..."
+    mv "$INSTALL_DIR/config/config.yaml.backup" "$INSTALL_DIR/config/config.yaml"
+    
+    # Mettre à jour manuellement en cas d'échec de sed
+    echo "🔧 Mise à jour manuelle de la configuration..."
+    python3 -c "
+import yaml
+import sys
+
+try:
+    with open('$INSTALL_DIR/config/config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Mettre à jour les valeurs
+    if 'docker' not in config:
+        config['docker'] = {}
+    config['docker']['network'] = '$DOCKER_NETWORK'
+    
+    if 'applications' not in config:
+        config['applications'] = {}
+    if 'sonarr' not in config['applications']:
+        config['applications']['sonarr'] = {}
+    if 'radarr' not in config['applications']:
+        config['applications']['radarr'] = {}
+    
+    config['applications']['sonarr']['config_path'] = '$CONFIGS_PATH/sonarr/config'
+    config['applications']['radarr']['config_path'] = '$CONFIGS_PATH/radarr/config'
+    
+    with open('$INSTALL_DIR/config/config.yaml', 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+    
+    print('✅ Configuration mise à jour avec Python')
+except Exception as e:
+    print(f'❌ Erreur Python: {e}')
+    sys.exit(1)
+" || echo "⚠️  Impossible de mettre à jour la configuration automatiquement"
+fi
 
 # Arrêter l'ancien conteneur s'il existe
 echo "🧹 Nettoyage de l'ancienne installation..."
