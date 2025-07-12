@@ -45,11 +45,8 @@ error_patterns:
 
 # Configuration des logs
 logging:
-  file_path: "/app/logs/qbittorrent-monitor.log"
+  file_path: "/config/logs/qbittorrent-monitor.log"
   max_size_mb: 50
-  backup_count: 5
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  max_file_size: "10MB"
   backup_count: 5
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 

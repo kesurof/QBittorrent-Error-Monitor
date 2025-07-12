@@ -15,7 +15,7 @@ services:
       - DRY_RUN=${DRY_RUN:-false}
     
     volumes:
-      - ${USERDIR:-./data}/qbittorrent-monitor:/config:rw
+      - ${USERDIR:-./data}/qbittorrent-monitor/config:/config:rw
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Montage des configurations pour récupération des API keys

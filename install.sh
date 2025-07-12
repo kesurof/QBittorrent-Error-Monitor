@@ -24,8 +24,8 @@ docker run -d \
     -e PUID=$(id -u) \
     -e PGID=$(id -g) \
     -e TZ=Europe/Paris \
-    -v "$INSTALL_DIR/config:/app/config:rw" \
-    -v "$INSTALL_DIR/logs:/app/logs:rw" \
+    -v "$INSTALL_DIR/config:/config:rw" \
+    -v "$INSTALL_DIR/logs:/config/logs:rw" \
     -v /var/run/docker.sock:/var/run/docker.sock:ro \
     -p 8080:8080 \
     ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:latest
