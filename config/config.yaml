@@ -1,0 +1,67 @@
+# Configuration QBittorrent Error Monitor
+# Ce fichier peut être personnalisé selon vos besoins
+
+# Configuration générale
+general:
+  check_interval: 300  # Intervalle en secondes
+  log_level: "INFO"    # DEBUG, INFO, WARNING, ERROR
+  max_retries: 3
+  retry_backoff: 2     # Facteur d'attente exponentielle
+  dry_run: false       # Mode test sans actions
+
+# Configuration Docker
+docker:
+  network: "traefik_proxy"
+  network_fallback: "bridge"
+  timeout: 5
+  container_timeout: 10
+
+# Configuration HTTP
+http:
+  timeout: 5
+  user_agent: "QBittorrent-Monitor/2.0"
+  max_connections: 10
+
+# Configuration des services
+services:
+  sonarr:
+    enabled: true
+    port: 8989
+    api_version: "v3"
+    container_name: "sonarr"
+    search_command: "missingEpisodeSearch"
+    max_errors_per_cycle: 10
+  
+  radarr:
+    enabled: true
+    port: 7878
+    api_version: "v3"
+    container_name: "radarr"
+    search_command: "MissingMoviesSearch"
+    max_errors_per_cycle: 10
+
+# Patterns d'erreurs à détecter
+error_patterns:
+  - "qBittorrent is reporting an error"
+  - "qBittorrent has returned an error"
+  - "Connection to qBittorrent failed"
+
+# Configuration des logs
+logging:
+  max_file_size: "10MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Configuration de sécurité
+security:
+  validate_paths: true
+  sanitize_inputs: true
+  max_path_length: 4096
+  allowed_user_chars: "a-zA-Z0-9._-"
+
+# Métriques et monitoring
+monitoring:
+  enable_stats: true
+  stats_interval: 600  # Sauvegarde stats toutes les 10min
+  enable_health_check: true
+  health_check_port: 8080

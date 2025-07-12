@@ -1,14 +1,23 @@
-# QBittorrent Error Monitor
+# QBittorrent Error Monitor v2.0 🚀
 
-**Monitoring automatique et correction des erreurs qBittorrent pour Sonarr/Radarr**
+**Solution Production-Ready pour le monitoring automatique et la correction des erreurs qBittorrent avec Sonarr/Radarr**
 
+[![Version](https://img.shields.io/badge/version-2.0-blue.svg)](https://github.com/kesurof/QBittorrent-Error-Monitor)
+[![Python](https://img.shields.io/badge/python-3.7+-green.svg)](https://python.org)
+[![Security](https://img.shields.io/badge/security-hardened-red.svg)](#sécurité)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- **Détection automatique** des erreurs "qBittorrent is reporting an error"
-- **Suppression automatique** des téléchargements problématiques
-- **Ajout à la blocklist** pour éviter les re-téléchargements
-- **Lancement automatique** de recherches de remplacement
-- **Service systemd** optimisé avec restart rapide 
+## 🎯 Fonctionnalités Principales
 
+- **🔍 Détection automatique** des erreurs "qBittorrent is reporting an error"
+- **🗑️ Suppression automatique** des téléchargements problématiques  
+- **🚫 Ajout à la blocklist** pour éviter les re-téléchargements
+- **🔍 Lancement automatique** de recherches de remplacement
+- **🛡️ Sécurité renforcée** avec validation stricte des entrées
+- **🔄 Retry intelligent** avec backoff exponentiel
+- **🧪 Modes de test** (dry-run, health-check, verbose)
+- **📊 Métriques avancées** et logging rotatif
+- **⚙️ Configuration flexible** (YAML, env vars, CLI)
 
 ## 🚀 Installation Rapide
 
@@ -19,11 +28,12 @@ curl -s https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main
 ```
 
 **Cette commande unique :**
-- Télécharge automatiquement tous les fichiers nécessaires
-- Détecte votre configuration existante (chemins Sonarr/Radarr)
-- Configure le script pour votre utilisateur
-- Installe le service systemd
-- Démarre le monitoring automatiquement
+- ✅ Télécharge et valide tous les fichiers nécessaires
+- 🔍 Détecte automatiquement votre configuration existante
+- 🛡️ Configure le script avec validation de sécurité
+- 🔧 Installe le service systemd sécurisé
+- 🚀 Démarre le monitoring automatiquement
+- 🧪 Effectue des tests de validation
 
 ### Installation pour un Utilisateur Spécifique
 
@@ -31,176 +41,341 @@ curl -s https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main
 curl -s https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/setup.sh | bash -s -- nom_utilisateur
 ```
 
-### Installation Manuelle (Alternative)
+### Installation Manuelle (Recommandée pour Production)
 
 ```bash
+# Clonage du repository
 git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
 cd QBittorrent-Error-Monitor
+
+# Test de validation complet
+chmod +x test-suite.sh
+./test-suite.sh
+
+# Installation si les tests passent
 chmod +x setup.sh
 ./setup.sh
 ```
 
+## 📋 Prérequis
 
-# Vérifier les permissions
-```bash
-ls -la ~/scripts/qbittorrent-monitor/
-ls -la ~/logs/
+- **Python 3.7+** avec pip
+- **Docker** en fonctionnement
+- **Sonarr/Radarr** configurés
+- **qBittorrent** connecté à Sonarr/Radarr
+- **Permissions sudo** pour l'installation du service
+
+## ⚙️ Configuration
+
+### Fichier de Configuration (config/config.yaml)
+
+```yaml
+# Configuration générale
+general:
+  check_interval: 300  # Intervalle en secondes
+  log_level: "INFO"    # DEBUG, INFO, WARNING, ERROR
+  max_retries: 3
+  retry_backoff: 2     # Facteur d'attente exponentielle
+  dry_run: false       # Mode test sans actions
+
+# Configuration des services
+services:
+  sonarr:
+    enabled: true
+    port: 8989
+    container_name: "sonarr"
+    max_errors_per_cycle: 10
+  
+  radarr:
+    enabled: true
+    port: 7878
+    container_name: "radarr"
+    max_errors_per_cycle: 10
+
+# Configuration sécurité
+security:
+  validate_paths: true
+  sanitize_inputs: true
+  max_path_length: 4096
 ```
 
-# Corriger les permissions si nécessaire
+### Variables d'Environnement
+
 ```bash
-sudo chown -R $(whoami):$(whoami) ~/scripts/qbittorrent-monitor
-sudo chown -R $(whoami):$(whoami) ~/logs
+export CHECK_INTERVAL=300        # Intervalle de vérification
+export LOG_LEVEL=INFO           # Niveau de logging
+export DOCKER_NETWORK=traefik_proxy  # Réseau Docker
+export DRY_RUN=false           # Mode simulation
 ```
 
-### Tests de Connectivité
+## 🧪 Modes de Test et Validation
+
+### Health Check Complet
 
 ```bash
-# Récupérer manuellement les IPs des containers
-SONARR_IP=$(docker inspect sonarr --format='{{.NetworkSettings.Networks.traefik_proxy.IPAddress}}')
-RADARR_IP=$(docker inspect radarr --format='{{.NetworkSettings.Networks.traefik_proxy.IPAddress}}')
+# Contrôle de santé du système
+python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --health-check
 
-echo "Sonarr IP: $SONARR_IP"
-echo "Radarr IP: $RADARR_IP"
-
-# Test de connectivité (remplacer API_KEY par votre clé)
-curl -H "X-Api-Key: VOTRE_API_KEY" http://$SONARR_IP:8989/api/v3/system/status
-curl -H "X-Api-Key: VOTRE_API_KEY" http://$RADARR_IP:7878/api/v3/system/status
+# Résultat JSON avec détails de connectivité
+{
+  "status": "healthy",
+  "services": {
+    "sonarr": {"status": "healthy", "container_ip": "172.18.0.5"},
+    "radarr": {"status": "healthy", "container_ip": "172.18.0.6"}
+  }
+}
 ```
 
-### Problèmes de Performance
+### Mode Dry-Run (Simulation)
 
 ```bash
-# Vérifier l'utilisation des ressources
-systemd-cgtop -p
+# Test sans effectuer d'actions réelles
+python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --dry-run --verbose
 
-# Analyser les temps de réponse
-python3 -c "
-import time
-import requests
-start = time.time()
-session = requests.Session()
-print(f'Temps d\'initialisation: {time.time() - start:.2f}s')
-"
-
-# Test de charge réseau
-ping -c 4 $(docker inspect sonarr --format='{{.NetworkSettings.IPAddress}}')
+# Sortie :
+# 🧪 DRY-RUN: sonarr: Suppression et blocklist simulée - Movie.Name.2024
+# 🧪 DRY-RUN: sonarr: Recherche de remplacement simulée
 ```
 
-## 🔧 Mode Debug
-
-### Activation du Mode Verbose
+### Test Complet du Système
 
 ```bash
-# Test avec logs détaillés
-python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --verbose --interval 60
+# Suite de tests complète
+./test-suite.sh
 
-# Test d'un seul cycle
+# Résultat :
+# ✅ Tests exécutés: 25
+# ✅ Tests réussis: 25
+# ❌ Tests échoués: 0
+# Taux de réussite: 100%
+```
+
+### Mode Test (Un Cycle)
+
+```bash
+# Exécution d'un seul cycle de monitoring
 python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --test --verbose
 ```
 
-### Configuration Debug Permanente
+## 🛡️ Sécurité
+
+### Fonctionnalités de Sécurité Intégrées
+
+- **✅ Validation stricte des entrées** avec regex patterns
+- **✅ Échappement sécurisé** pour toutes les commandes shell
+- **✅ Pas d'utilisation de `shell=True`** dans subprocess
+- **✅ Validation des chemins** contre le directory traversal
+- **✅ Limitation des ressources** (CPU, mémoire, timeouts)
+- **✅ Variables d'environnement quotées** et échappées
+- **✅ Sandbox systemd** avec restrictions d'accès
+
+### Exemple de Validation Sécurisée
+
+```python
+# ❌ Avant (vulnérable)
+cmd = f"docker inspect {container_name}"
+subprocess.run(cmd, shell=True)
+
+# ✅ Après (sécurisé)
+container_name = SecurityValidator.sanitize_container_name(container_name)
+cmd_parts = ['docker', 'inspect', container_name]
+subprocess.run(cmd_parts, check=False)
+```
+
+## 📊 Monitoring et Métriques
+
+### Logs Rotatifs
 
 ```bash
-# Modifier le service pour mode debug
-sudo systemctl edit qbittorrent-monitor
+# Logs en temps réel
+tail -f ~/logs/qbittorrent-error-monitor.log
+
+# Rotation automatique (10MB, 5 fichiers)
+~/logs/qbittorrent-error-monitor.log.1
+~/logs/qbittorrent-error-monitor.log.2
 ```
 
-Ajouter :
-
-```ini
-[Service]
-Environment=LOG_LEVEL=DEBUG
-ExecStart=
-ExecStart=/usr/bin/python3 /home/VOTRE_USER/scripts/qbittorrent-monitor/qbittorrent-monitor.py --verbose --interval 300
-```
-
-### Diagnostic Avancé
+### Statistiques JSON
 
 ```bash
-# Vérifier la structure des données API
-curl -H "X-Api-Key: VOTRE_API_KEY" http://IP_SONARR:8989/api/v3/queue | jq '.[0]'
+# Statistiques détaillées
+cat ~/logs/qbittorrent-stats.json
 
-# Rechercher des erreurs spécifiques
-curl -H "X-Api-Key: VOTRE_API_KEY" http://IP_SONARR:8989/api/v3/queue | jq '.[] | select(.statusMessages != null)'
-
-# Analyser l'historique
-curl -H "X-Api-Key: VOTRE_API_KEY" http://IP_SONARR:8989/api/v3/history | jq '.[] | select(.eventType == "downloadFailed")'
-```
-
-## 📈 Performances
-
-- **Temps de démarrage** : < 5 secondes
-- **Temps d'arrêt** : < 10 secondes
-- **Consommation RAM** : < 64M
-- **CPU** : < 5% en moyenne
-- **Détection** : ~30 secondes après l'erreur
-
-## 🔐 Sécurité
-
-- **Utilisateur dédié** : Pas d'exécution root
-- **Permissions minimales** : Accès limité aux ressources
-- **Isolation** : Conteneurisation des données
-- **Timeouts** : Protection contre les blocages
-
-## 📝 Structure des Logs
-
-### Fichiers de Logs
-
-| Fichier | Description | Emplacement |
-|---------|-------------|-------------|
-| `qbittorrent-error-monitor.log` | Logs applicatifs | `~/logs/` |
-| `qbittorrent-stats.json` | Statistiques JSON | `~/logs/` |
-| Journal systemd | Logs système | `journalctl -u qbittorrent-monitor` |
-
-### Format des Statistiques JSON
-
-```json
 {
   "cycles": 150,
   "errors_detected": 5,
   "downloads_removed": 5,
-  "searches_triggered": 5,
-  "start_time": "2025-07-12T10:00:00",
-  "last_check": "2025-07-12T12:00:00"
+  "searches_triggered": 3,
+  "errors_by_service": {
+    "sonarr": 3,
+    "radarr": 2
+  },
+  "performance_metrics": {
+    "sonarr": [
+      {"operation": "get_queue", "duration": 0.45}
+    ]
+  }
 }
 ```
 
-## 🔄 Mise à Jour
-
-### Mise à Jour Manuelle
+### Service Systemd Avancé
 
 ```bash
-# Arrêt du service
-sudo systemctl stop qbittorrent-monitor
+# Statut détaillé
+sudo systemctl status qbittorrent-monitor
 
-# Sauvegarde
-cp ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py.backup
+# Logs en temps réel
+sudo journalctl -u qbittorrent-monitor -f
 
-# Téléchargement nouvelle version
-cd ~/scripts/qbittorrent-monitor
-curl -s https://raw.githubusercontent.com/VOTRE_USERNAME/qbittorrent-monitor/main/qbittorrent-monitor.py -o qbittorrent-monitor.py
+# Métriques de ressources
+systemd-cgtop -p | grep qbittorrent
+```
 
-# Redémarrage
+## 🔧 Gestion du Service
+
+### Commandes de Base
+
+```bash
+# Démarrage/Arrêt
 sudo systemctl start qbittorrent-monitor
+sudo systemctl stop qbittorrent-monitor
+sudo systemctl restart qbittorrent-monitor
+
+# Status et logs
+sudo systemctl status qbittorrent-monitor
+sudo journalctl -u qbittorrent-monitor -n 50
+
+# Activation/Désactivation
+sudo systemctl enable qbittorrent-monitor
+sudo systemctl disable qbittorrent-monitor
 ```
 
-### Réinstallation Complète
+### Configuration Avancée du Service
+
+Le service systemd inclut :
+- **Restart automatique** avec backoff intelligent
+- **Health check** avant démarrage
+- **Limites de ressources** (128MB RAM, 25% CPU)
+- **Sandbox de sécurité** avec accès restreint
+- **Monitoring des ressources** avec IPAccounting
+
+## 🚨 Dépannage
+
+### Problèmes Courants
+
+#### 1. Service qui ne démarre pas
 
 ```bash
-# Arrêt et suppression
-sudo systemctl stop qbittorrent-monitor
-sudo systemctl disable qbittorrent-monitor
-sudo rm /etc/systemd/system/qbittorrent-monitor.service
+# Vérification des logs
+sudo journalctl -u qbittorrent-monitor -n 20
 
-# Nouvelle installation
-curl -s https://raw.githubusercontent.com/VOTRE_USERNAME/qbittorrent-monitor/main/setup.sh | bash
+# Test manuel
+sudo -u $USER python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --test --verbose
 ```
 
-## 🙏 Remerciements
+#### 2. Erreurs de connectivité Docker
 
-- [Sonarr](https://github.com/Sonarr/Sonarr) - Gestion automatisée des séries TV
-- [Radarr](https://github.com/Radarr/Radarr) - Gestion automatisée des films
-- [qBittorrent](https://github.com/qbittorrent/qBittorrent) - Client BitTorrent
+```bash
+# Vérification des IPs des conteneurs
+docker inspect sonarr --format='{{.NetworkSettings.Networks.traefik_proxy.IPAddress}}'
+docker inspect radarr --format='{{.NetworkSettings.Networks.traefik_proxy.IPAddress}}'
 
-**Made with ❤️ for the media automation community**
+# Test de connectivité
+ping -c 3 <container_ip>
+```
+
+#### 3. Clés API manquantes
+
+```bash
+# Vérification des fichiers de config
+ls -la /home/$USER/.config/sonarr/config/config.xml
+ls -la /home/$USER/.config/radarr/config/config.xml
+
+# Extraction manuelle de la clé API
+grep -o '<ApiKey>.*</ApiKey>' /home/$USER/.config/sonarr/config/config.xml
+```
+
+#### 4. Permissions insuffisantes
+
+```bash
+# Correction des permissions
+sudo chown -R $USER:$USER ~/scripts/qbittorrent-monitor/
+sudo chown -R $USER:$USER ~/logs/
+chmod +x ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py
+```
+
+### Mode Debug Avancé
+
+```bash
+# Logs détaillés avec toutes les informations
+python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py \
+  --verbose \
+  --test \
+  --config ~/scripts/qbittorrent-monitor/config/config.yaml
+
+# Health check détaillé
+python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --health-check | jq .
+```
+
+## 🔄 Migration depuis v1.0
+
+### Mise à Jour Automatique
+
+```bash
+# Sauvegarde de l'ancienne configuration
+sudo systemctl stop qbittorrent-monitor
+cp -r ~/scripts/qbittorrent-monitor ~/scripts/qbittorrent-monitor.backup
+
+# Installation de la v2.0
+curl -s https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/setup.sh | bash
+
+# Vérification du bon fonctionnement
+python3 ~/scripts/qbittorrent-monitor/qbittorrent-monitor.py --health-check
+```
+
+### Nouvelles Fonctionnalités v2.0
+
+- 🛡️ **Sécurité renforcée** avec validation stricte
+- 🔄 **Retry intelligent** avec backoff exponentiel
+- 🧪 **Modes de test** complets (dry-run, health-check)
+- 📊 **Métriques avancées** et performance tracking
+- ⚙️ **Configuration YAML** flexible
+- 🚀 **Installation sécurisée** avec validation
+- 📝 **Logging rotatif** avec niveaux configurables
+
+## 🤝 Contribution
+
+Contributions bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md)
+
+1. Fork le projet
+2. Créer une branche (`git checkout -b feature/improvement`)
+3. Exécuter les tests (`./test-suite.sh`)
+4. Commit vos changements (`git commit -am 'Add improvement'`)
+5. Push vers la branche (`git push origin feature/improvement`)
+6. Créer une Pull Request
+
+## 📝 Changelog
+
+### v2.0.0 (2024)
+- 🛡️ Sécurité renforcée avec validation stricte des entrées
+- 🔄 Retry automatique avec backoff exponentiel
+- 🧪 Modes de test complets (dry-run, health-check, verbose)
+- 📊 Métriques avancées et monitoring de performance
+- ⚙️ Configuration YAML flexible et hiérarchique
+- 🚀 Installation sécurisée avec tests de validation
+- 📝 Logging rotatif avec niveaux configurables
+- 🔧 Service systemd avec sandbox de sécurité
+
+### v1.0.0 (2024)
+- 🔍 Détection automatique des erreurs qBittorrent
+- 🗑️ Suppression et blocklist automatiques
+- 🔍 Recherches de remplacement automatiques
+- 🔧 Service systemd basique
+
+## 📄 License
+
+Ce projet est sous licence MIT. Voir [LICENSE](LICENSE) pour plus de détails.
+
+---
+
+**⭐ Si ce projet vous aide, n'hésitez pas à lui donner une étoile !**
