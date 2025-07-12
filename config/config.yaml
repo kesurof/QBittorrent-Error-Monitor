@@ -1,5 +1,5 @@
 # Configuration QBittorrent Monitor pour ssdv2
-# Auto-configuration activée pour déploiement simple
+# Auto-configuration pour environnement Docker
 
 # Configuration générale
 monitor:
@@ -8,57 +8,47 @@ monitor:
   dry_run: false
   timezone: "Europe/Paris"
 
-# Configuration qBittorrent (auto-détection)
-qbittorrent:
-  auto_detect: true
-  container_names:
-    - "qbittorrent"
-    - "qbittorrent-vpn"
-  web_ui:
-    host: "localhost"
-    port: 8080
-    username: "admin"
-    # password: auto-détecté
-
-# Configuration Sonarr (auto-détection)
-sonarr:
-  enabled: true
-  auto_detect: true
-  container_names:
-    - "sonarr"
-  config_paths:
-    - "/configs/sonarr/config"
-  api:
-    auto_detect_key: true
-
-# Configuration Radarr (auto-détection)
-radarr:
-  enabled: true
-  auto_detect: true
-  container_names:
-    - "radarr"
-  config_paths:
-    - "/configs/radarr/config"
-  api:
-    auto_detect_key: true
-
 # Configuration Docker
 docker:
   network: "traefik_proxy"  # Réseau par défaut ssdv2
   socket_path: "/var/run/docker.sock"
 
-# Logging
+# Configuration des services
+services:
+  sonarr:
+    enabled: true
+    port: 8989
+    api_version: "v3"
+    container_names: 
+      - "sonarr"
+    config_paths:
+      - "/configs/sonarr/config"  # Chemin monté dans le conteneur
+    search_command: "missingEpisodeSearch"
+    
+  radarr:
+    enabled: true
+    port: 7878
+    api_version: "v3"
+    container_names:
+      - "radarr"
+    config_paths:
+      - "/configs/radarr/config"  # Chemin monté dans le conteneur
+    search_command: "MissingMoviesSearch"
+
+# Patterns d'erreurs qBittorrent à détecter
+error_patterns:
+  - "qBittorrent is reporting an error"
+  - "qBittorrent has returned an error"
+  - "Connection to qBittorrent failed"
+  - "qbittorrent error"
+  - "torrent client error"
+
+# Configuration des logs
 logging:
   file_path: "/app/logs/qbittorrent-monitor.log"
   max_size_mb: 50
   backup_count: 5
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-# Actions
-actions:
-  restart_containers: true
-  notify_errors: true
-  statistics: true
   max_file_size: "10MB"
   backup_count: 5
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
