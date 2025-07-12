@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  qbittorrent-monitor:
+    image: ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2
+    container_name: qbittorrent-monitor
+    restart: unless-stopped
+    
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - CHECK_INTERVAL=300
+      - LOG_LEVEL=INFO
+      - DRY_RUN=false
+      - DOCKER_NETWORK=traefik_proxy
+    
+    volumes:
+      - ${USERDIR}/docker/qbittorrent-monitor/config:/app/config:rw
+      - ${USERDIR}/docker/qbittorrent-monitor/logs:/app/logs:rw
+      - ${USERDIR}:${USERDIR}
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Montage des configurations pour récupération des API keys
+      - ${USERDIR}/docker:/configs:ro
+    
+    ports:
+      - "8080:8080"  # Port health check (optionnel)
+    
+    networks:
+      - traefik_proxy
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  traefik_proxy:
+    external: true

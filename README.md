@@ -42,74 +42,55 @@ image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2'
 
 > 💡 **Aucune construction locale nécessaire !** L'image est automatiquement disponible sur GitHub Container Registry.
 
-## 📁 **Installation ssdv2 (Simple & Rapide)**
+## 📁 **Installation ssdv2**
 
-### **🚀 Méthode recommandée : Image pré-construite**
+### **🚀 Application autonome - Compatible ssdv2**
 
-**Aucune compilation nécessaire !** L'image est automatiquement construite et publiée.
+**L'application est autonome et s'auto-configure.** ssdv2 s'occupe du déploiement.
 
-### **Étape 1 : Téléchargement du fichier ssdv2**
+**Étape unique : Copier le fichier d'exemple**
 
 ```bash
-# Télécharger directement le fichier de configuration ssdv2
+# Télécharger le fichier d'exemple
 wget -O qbittorrent-monitor.yml https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/qbittorrent-monitor.yml
 ```
 
-### **Étape 2 : Integration dans ssdv2**
+**Puis l'intégrer dans votre configuration ssdv2 habituelle.**
 
-```bash
-# Copier dans le répertoire ssdv2 (adapter le chemin)
-cp qbittorrent-monitor.yml /opt/seedbox/docker/includes/dockerapps/vars/
+> ✅ **C'est tout !** L'application détecte automatiquement les conteneurs qBittorrent, Sonarr, Radarr et s'auto-configure.
 
-# Ou pour Saltbox
-cp qbittorrent-monitor.yml ~/ssdv2/roles/ansible/
-```
-
-### **Étape 3 : Déploiement automatique**
-
-```bash
-# Via ssdv2/Saltbox - L'image sera automatiquement téléchargée
-cd ~/ssdv2
-sudo ansible-playbook -i inventory.yml playbook.yml --tags qbittorrent-monitor
-```
-
-> ✅ **C'est tout !** L'image `ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2` sera automatiquement téléchargée et déployée.
-
-## 🔄 **Cycle de déploiement automatique**
+## 🔄 **Flux simplifié**
 
 ```mermaid
 graph LR
     A[Push Code] --> B[GitHub Actions]
-    B --> C[Build Multi-Arch]
-    C --> D[Publish GHCR]
-    D --> E[Image disponible]
-    E --> F[ssdv2 pull & deploy]
+    B --> C[Image GHCR]
+    C --> D[Fichier .yml]
+    D --> E[ssdv2 s'occupe du reste]
 ```
 
-1. **Push code** vers GitHub
-2. **GitHub Actions** build automatiquement (5-10 min)
-3. **Image publiée** sur GitHub Container Registry
-4. **ssdv2** télécharge et déploie l'image
-5. **Prêt à l'emploi !**
+1. **Push code** → GitHub Actions build l'image
+2. **Image disponible** sur GHCR  
+3. **Utilisateur** télécharge le fichier `.yml` d'exemple
+4. **ssdv2** déploie selon sa configuration
+5. **Application** s'auto-configure au démarrage
 
 ## ⚙️ **Configuration avancée**
 
-### **Variables d'environnement**
+### **Variables d'environnement ssdv2**
 
 ```yaml
-pg_env:
-  # Permissions système
-  PUID: "{{ lookup('env','MYUID') }}"        # ID utilisateur
-  PGID: "{{ lookup('env','MYGID') }}"        # ID groupe
-  TZ: 'Europe/Paris'                         # Fuseau horaire
+environment:
+  # Variables ssdv2 standards
+  - PUID=${PUID}                    # ID utilisateur
+  - PGID=${PGID}                    # ID groupe  
+  - TZ=${TZ}                        # Fuseau horaire
   
-  # Configuration monitoring
-  CHECK_INTERVAL: '300'                      # Intervalle vérification (sec)
-  LOG_LEVEL: 'INFO'                          # DEBUG|INFO|WARNING|ERROR
-  DRY_RUN: 'false'                          # Mode simulation
-  
-  # Réseau Docker
-  DOCKER_NETWORK: 'traefik_proxy'           # Réseau Docker
+  # Configuration application
+  - CHECK_INTERVAL=300              # Intervalle vérification (sec)
+  - LOG_LEVEL=INFO                  # DEBUG|INFO|WARNING|ERROR
+  - DRY_RUN=false                   # Mode simulation
+  - DOCKER_NETWORK=traefik_proxy    # Réseau Docker
 ```
 
 ### **Personnalisation des patterns d'erreur**
@@ -133,17 +114,16 @@ error_patterns:
     - "Disk full"
 ```
 
-## 📂 **Structure des fichiers**
+## 📂 **Structure des fichiers (auto-créée)**
 
 ```bash
-# Structure automatiquement créée
-/settings/storage/docker/USER/qbittorrent-monitor/
+# ssdv2 crée automatiquement
+${USERDIR}/docker/qbittorrent-monitor/
 ├── config/
-│   ├── config.yaml              # Configuration principal
-│   └── discovered_services.json # Services auto-découverts
+│   ├── config.yaml              # Configuration auto-générée
+│   └── discovered_services.json # Services détectés
 └── logs/
-    ├── qbittorrent-monitor.log  # Logs application
-    └── health.log               # Logs health check
+    └── qbittorrent-monitor.log  # Logs application
 ```
 
 ## 🔧 **Commandes utiles**
@@ -195,15 +175,15 @@ curl -f http://localhost:8080/health || echo "Service KO"
 - **Multi-arch** : Support AMD64, ARM64, ARM v7
 - **Tags** : `latest`, `ssdv2`, version git SHA
 
-### **🛠️ Scripts disponibles**
+### **🛠️ Scripts et fichiers**
 
-| Script | Usage | Description |
-|--------|-------|-------------|
+| Fichier | Usage | Description |
+|---------|-------|-------------|
+| `qbittorrent-monitor.yml` | **Exemple ssdv2** | Fichier de configuration d'exemple |
 | `deploy-ghcr.sh` | **Plan B** | Build manuel si GitHub Actions indisponible |
-| `.github/workflows/docker.yml` | **Principal** | CI/CD automatique |
-| `qbittorrent-monitor.yml` | **ssdv2** | Configuration Ansible pour déploiement |
+| `.github/workflows/docker.yml` | **CI/CD** | Pipeline automatique |
 
-> 💡 **Flux normal** : Push code → GitHub Actions → Image GHCR → ssdv2 deploy
+> 💡 **Principe** : Application autonome + Fichier d'exemple → ssdv2 fait le reste
 
 ## 🔗 **Ressources et liens**
 
