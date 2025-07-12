@@ -15,9 +15,8 @@ fi
 # Create logs directory in config
 mkdir -p /config/logs
 
-# Set permissions
-lsiown abc:abc /config
-lsiown abc:abc /config/logs
-lsiown -R abc:abc /app
+# Set permissions using chown instead of lsiown
+chown -R abc:abc /config
+chown -R abc:abc /app
 
 echo "**** Configuration complete ****"
