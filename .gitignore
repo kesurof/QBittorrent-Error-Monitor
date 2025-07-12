@@ -3,6 +3,13 @@
 *.log.*
 logs/
 
+# Fichiers de backup et temporaires
+*-old.*
+*-backup.*
+*-temp.*
+.DS_Store
+Thumbs.db
+
 # Fichiers Python
 __pycache__/
 *.py[cod]
@@ -40,15 +47,6 @@ venv.bak/
 *.swp
 *.swo
 *~
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Configuration locale
 config/local.yaml

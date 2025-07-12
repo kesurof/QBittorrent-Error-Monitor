@@ -35,24 +35,20 @@
 ## 🐳 **Image Docker**
 
 ```yaml
-# Image automatiquement construite et publiée via GitHub Actions
-# Multi-architecture : AMD64, ARM64, ARM v7
+# Image multi-architecture (AMD64, ARM64, ARM v7)
 image: 'ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2'
 ```
 
-> 💡 **Aucune construction locale nécessaire !** L'image est automatiquement disponible sur GitHub Container Registry.
+## 📁 **Installation ssdv2**
 
-## 📁 **Installation ssdv2 (Simple & Rapide)**
-
-### **🚀 Méthode recommandée : Image pré-construite**
-
-**Aucune compilation nécessaire !** L'image est automatiquement construite et publiée.
-
-### **Étape 1 : Téléchargement du fichier ssdv2**
+### **Étape 1 : Téléchargement du fichier de configuration**
 
 ```bash
-# Télécharger directement le fichier de configuration ssdv2
+# Télécharger le fichier ssdv2
 wget -O qbittorrent-monitor.yml https://raw.githubusercontent.com/kesurof/QBittorrent-Error-Monitor/main/qbittorrent-monitor.yml
+
+# Ou cloner le repository complet
+git clone https://github.com/kesurof/QBittorrent-Error-Monitor.git
 ```
 
 ### **Étape 2 : Integration dans ssdv2**
@@ -65,32 +61,15 @@ cp qbittorrent-monitor.yml /opt/seedbox/docker/includes/dockerapps/vars/
 cp qbittorrent-monitor.yml ~/ssdv2/roles/ansible/
 ```
 
-### **Étape 3 : Déploiement automatique**
+### **Étape 3 : Déploiement**
 
 ```bash
-# Via ssdv2/Saltbox - L'image sera automatiquement téléchargée
+# Via ssdv2/Saltbox
 cd ~/ssdv2
 sudo ansible-playbook -i inventory.yml playbook.yml --tags qbittorrent-monitor
+
+# Ou via interface ssdv2 web si disponible
 ```
-
-> ✅ **C'est tout !** L'image `ghcr.io/kesurof/qbittorrent-error-monitor/qbittorrent-monitor:ssdv2` sera automatiquement téléchargée et déployée.
-
-## 🔄 **Cycle de déploiement automatique**
-
-```mermaid
-graph LR
-    A[Push Code] --> B[GitHub Actions]
-    B --> C[Build Multi-Arch]
-    C --> D[Publish GHCR]
-    D --> E[Image disponible]
-    E --> F[ssdv2 pull & deploy]
-```
-
-1. **Push code** vers GitHub
-2. **GitHub Actions** build automatiquement (5-10 min)
-3. **Image publiée** sur GitHub Container Registry
-4. **ssdv2** télécharge et déploie l'image
-5. **Prêt à l'emploi !**
 
 ## ⚙️ **Configuration avancée**
 
@@ -187,23 +166,107 @@ docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --config /ap
 curl -f http://localhost:8080/health || echo "Service KO"
 ```
 
-## 🏗️ **Architecture & Développement**
+## 🛠️ **Patterns d'erreur détectés**
 
-### **🔄 CI/CD Pipeline**
-- **GitHub Actions** : Build automatique multi-architecture à chaque push
-- **GitHub Container Registry** : Stockage et distribution des images
-- **Multi-arch** : Support AMD64, ARM64, ARM v7
-- **Tags** : `latest`, `ssdv2`, version git SHA
+| Catégorie | Patterns détectés | Action |
+|-----------|------------------|---------|
+| **Réseau** | Connection timeout, DNS failed, No route to host | Suppression + Blacklist + Recherche |
+| **Tracker** | Unregistered, Announce failed, Tracker error | Blacklist + Recherche |
+| **Fichier** | No space left, Permission denied, Disk full | Suppression + Alerte |
+| **Ratio** | Ratio limit reached, Upload limit | Suppression + Recherche |
+| **Autorisation** | Unauthorized, Invalid passkey | Blacklist |
 
-### **🛠️ Scripts disponibles**
+## 🔒 **Sécurité et performances**
 
-| Script | Usage | Description |
-|--------|-------|-------------|
-| `deploy-ghcr.sh` | **Plan B** | Build manuel si GitHub Actions indisponible |
-| `.github/workflows/docker.yml` | **Principal** | CI/CD automatique |
-| `qbittorrent-monitor.yml` | **ssdv2** | Configuration Ansible pour déploiement |
+### **Sécurité**
+- ✅ Conteneur **non-privilégié**
+- ✅ Socket Docker en **lecture seule**
+- ✅ Pas de ports exposés (8080 optionnel pour health check)
+- ✅ Utilisateur non-root à l'exécution
+- ✅ Isolation réseau complète
 
-> 💡 **Flux normal** : Push code → GitHub Actions → Image GHCR → ssdv2 deploy
+### **Performances**
+- 🚀 **Ressources limitées** : 128MB RAM, 0.25 CPU
+- 🚀 **Efficacité** : Vérification toutes les 5 minutes par défaut
+- 🚀 **Cache intelligent** : Évite les requêtes redondantes
+- 🚀 **Multi-architecture** : AMD64, ARM64, ARM v7
+
+## 🆘 **Guide de dépannage**
+
+### **❌ Le conteneur ne démarre pas**
+
+```bash
+# 1. Vérifier les logs de démarrage
+docker logs qbittorrent-monitor
+
+# 2. Vérifier le réseau traefik_proxy
+docker network ls | grep traefik_proxy
+
+# 3. Vérifier les permissions du volume
+ls -la /settings/storage/docker/USER/qbittorrent-monitor/
+
+# 4. Recréer le conteneur
+docker-compose down qbittorrent-monitor
+docker-compose up -d qbittorrent-monitor
+```
+
+### **❌ Services non détectés**
+
+```bash
+# 1. Vérifier que tous les conteneurs sont dans traefik_proxy
+docker inspect sonarr radarr qbittorrent | grep NetworkMode
+
+# 2. Tester la connectivité réseau
+docker exec qbittorrent-monitor ping sonarr
+docker exec qbittorrent-monitor ping radarr
+docker exec qbittorrent-monitor ping qbittorrent
+
+# 3. Vérifier les fichiers de configuration
+docker exec qbittorrent-monitor ls -la /configs/*/config.xml
+```
+
+### **❌ Pas d'actions automatiques**
+
+```bash
+# 1. Vérifier le mode dry-run
+docker exec qbittorrent-monitor env | grep DRY_RUN
+
+# 2. Tester en mode verbose
+docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --verbose --test
+
+# 3. Vérifier les API keys
+docker exec qbittorrent-monitor python3 /app/qbittorrent-monitor.py --health-check
+```
+
+### **❌ Erreurs de permissions**
+
+```bash
+# 1. Vérifier PUID/PGID
+docker exec qbittorrent-monitor id
+
+# 2. Comparer avec l'utilisateur propriétaire des fichiers
+ls -la /settings/storage/docker/USER/
+
+# 3. Corriger les permissions si nécessaire
+sudo chown -R $MYUID:$MYGID /settings/storage/docker/USER/qbittorrent-monitor/
+```
+
+## 📈 **Métriques et monitoring**
+
+### **Health check**
+```bash
+# Test de santé via HTTP
+curl http://localhost:8080/health
+
+# Réponse attendue
+{"status": "healthy", "services": {"qbittorrent": true, "sonarr": true, "radarr": true}}
+```
+
+### **Métriques de performance**
+- **Temps de réponse** des APIs surveillées
+- **Nombre d'erreurs** détectées par heure
+- **Actions automatiques** effectuées
+- **Utilisation ressources** du conteneur
 
 ## 🔗 **Ressources et liens**
 

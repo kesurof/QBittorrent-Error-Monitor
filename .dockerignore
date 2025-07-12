@@ -8,8 +8,9 @@
 README*.md
 docs/
 
-# Scripts de développement
-publish-docker.sh
+# Scripts de développement et déploiement
+deploy-*.sh
+docker-compose*.yml
 
 # Tests et données temporaires
 logs/

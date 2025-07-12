@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# Script de construction et déploiement pour GitHub Container Registry
+# Script de construction et déploiement MANUEL pour GitHub Container Registry
+# ⚠️  ATTENTION : Ce script n'est nécessaire QUE si GitHub Actions ne fonctionne pas
+# 🚀 RECOMMANDÉ : Utilisez GitHub Actions pour un déploiement automatique
+#
+# Usage normal : Push vers GitHub → GitHub Actions s'occupe de tout
+# Usage de secours : ./deploy-ghcr.sh (si GitHub Actions indisponible)
+
 set -e
 
 echo "🚀 Déploiement QBittorrent Error Monitor avec GitHub Container Registry"
